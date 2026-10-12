@@ -39,6 +39,224 @@
       {"label": "chat widget", "value": "planned", "state": "planned"},
       {"label": "vision widget", "value": "planned", "state": "planned"},
       {"label": "branching", "value": "main to dev, tag to stg, approved digest to prd", "state": "ok"}
-    ]}
-  ]
+    ]},
+    {
+      "key": "lead",
+      "type": "lead",
+      "title": "ABOUT",
+      "text": "**synthwerk-widgets** holds the embeddable AI chat and vision widgets for [synthwerk](https://github.com/VelimirMueller/synthwerk). The rewrite is planned. Until then, `main` holds a README. It holds it well."
+    },
+    {
+      "key": "what",
+      "type": "notes",
+      "title": "THE SHORT VERSION",
+      "columns": 2,
+      "items": [
+        {
+          "lead": "One loader element",
+          "text": "One loader element puts a launcher on the page. The widget app runs in an isolated iframe."
+        },
+        {
+          "lead": "Desktop and mobile",
+          "text": "Floating button on desktop, bottom sheet on mobile."
+        },
+        {
+          "lead": "Studio settings",
+          "text": "Position, theme and language come from studio settings."
+        },
+        {
+          "lead": "Signed-in users only",
+          "text": "Logged-out visitors see a sign-in prompt."
+        }
+      ]
+    },
+    {
+      "key": "startnotes",
+      "type": "notes",
+      "title": "WHAT YOU GET",
+      "items": [
+        {
+          "lead": "Nothing to install",
+          "text": "There is nothing to install, build or run yet. This is the honest quick start."
+        }
+      ]
+    },
+    {
+      "key": "hownotes",
+      "type": "notes",
+      "title": "WHO MEETS WHOM",
+      "columns": 2,
+      "items": [
+        {
+          "lead": "Three services",
+          "text": "The widget calls three services: `synthwerk-llm`, `synthwerk-vision` and `synthwerk-identity`"
+        },
+        {
+          "lead": "The host page",
+          "text": "The host page only meets the loader element. The iframe keeps the rest away from it."
+        }
+      ]
+    },
+    {
+      "key": "usage",
+      "type": "notes",
+      "title": "FACTS FROM THE OLD README",
+      "columns": 2,
+      "items": [
+        {
+          "lead": "Ecosystem map",
+          "text": "[synthwerk](https://github.com/VelimirMueller/synthwerk)."
+        },
+        {
+          "lead": "Blueprint",
+          "text": "Shared CI, lint configs and templates: [synthwerk-blueprint](https://github.com/VelimirMueller/synthwerk-blueprint)."
+        },
+        {
+          "lead": "Renamed",
+          "text": "This repo was renamed. The old URL still redirects here."
+        },
+        {
+          "lead": "Old code",
+          "text": "Tag `legacy-final` holds a Nuxt 3 chat page for the old GPT4All server."
+        },
+        {
+          "lead": "Branching",
+          "text": "`main` deploys to dev, a `vX.Y.Z` tag to stg, an approved digest to prd."
+        },
+        {
+          "lead": "License",
+          "text": "MIT. Copyright 2026 Velimir Mueller."
+        }
+      ]
+    },
+    {
+      "key": "statuslog",
+      "type": "commands",
+      "title": "STATUS LOG",
+      "rows": [
+        {
+          "cmd": "[ STATUS ]",
+          "text": "Rewrite planned, epic E3."
+        },
+        {
+          "cmd": "[ WORKS ]",
+          "text": "The README."
+        },
+        {
+          "cmd": "[ NEXT ]",
+          "text": "Chat vertical slice."
+        }
+      ]
+    },
+    {
+      "key": "honest",
+      "type": "notes",
+      "title": "TESTS, CI, STACK",
+      "columns": 3,
+      "items": [
+        {
+          "lead": "Tests",
+          "text": "There is no code and no test command yet."
+        },
+        {
+          "lead": "CI later",
+          "text": "When the rewrite lands, the blueprint CI runs on every PR."
+        },
+        {
+          "lead": "Stack",
+          "text": "Vue 3.5 custom elements."
+        }
+      ]
+    },
+    {
+      "key": "links",
+      "type": "buttons",
+      "items": [
+        {
+          "label": "synthwerk",
+          "sub": "ecosystem map",
+          "href": "https://github.com/VelimirMueller/synthwerk"
+        },
+        {
+          "label": "Blueprint",
+          "sub": "shared CI, lint, templates",
+          "href": "https://github.com/VelimirMueller/synthwerk-blueprint"
+        },
+        {
+          "label": "legacy-final",
+          "sub": "old Nuxt 3 chat page",
+          "href": "https://github.com/VelimirMueller/synthwerk-widgets/tree/legacy-final"
+        },
+        {
+          "label": "License",
+          "sub": "MIT",
+          "href": "LICENSE"
+        },
+        {
+          "label": "VM. flagship",
+          "sub": "github.com/VelimirMueller",
+          "href": "https://github.com/VelimirMueller"
+        },
+        {
+          "label": "Plain text",
+          "sub": "show copyable commands"
+        }
+      ]
+    },
+    {
+      "key": "footer",
+      "type": "footer",
+      "studio": "VM. studio / flagship",
+      "text": "open source · look per vm-brand playbook · MIT © 2026 Velimir Mueller",
+      "eof": "-- EOF -- stays in its frame --"
+    }
+  ],
+  "readme": {
+    "hero_alt": "SYNTHWERK-WIDGETS. Embeddable AI chat and vision widgets. Rewrite planned. Widgets, chat, vision, iframe.",
+    "items": [
+      "lead",
+      "stats",
+      "divider:what",
+      "features",
+      "what",
+      "divider:start",
+      "start",
+      {
+        "details": "links",
+        "chip": 6,
+        "code": [
+          [
+            "bash",
+            "gh repo clone VelimirMueller/synthwerk-widgets\ncd synthwerk-widgets\nls   # LICENSE and README.md, that is all of it today"
+          ]
+        ]
+      },
+      "startnotes",
+      {
+        "buttons": "links",
+        "only": [
+          1,
+          2,
+          3
+        ]
+      },
+      "divider:how",
+      "flow",
+      "hownotes",
+      "divider:usage",
+      "usage",
+      "divider:status",
+      "status",
+      "statuslog",
+      "honest",
+      {
+        "buttons": "links",
+        "only": [
+          4,
+          5
+        ]
+      },
+      "footer"
+    ]
+  }
 }

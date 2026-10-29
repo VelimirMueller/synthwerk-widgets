@@ -168,6 +168,13 @@ describe('createChat', () => {
     expect(chat.state.messages[1]?.state).toBe('done')
   })
 
+  it('done without any text - no empty bubble, generic error', async () => {
+    const chat = createChat({ sw: fakeSw({ events: [done] }) })
+    await chat.send('Hi')
+    expect(chat.state.messages.map((m) => m.role)).toEqual(['user'])
+    expect(chat.state.error).toEqual({ kind: 'generic' })
+  })
+
   it('dispose while idle - no error', () => {
     const chat = createChat({ sw: fakeSw({}) })
     expect(() => chat.dispose()).not.toThrow()

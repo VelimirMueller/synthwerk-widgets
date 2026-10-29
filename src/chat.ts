@@ -88,6 +88,8 @@ export function createChat(options: ChatOptions): Chat {
         }
       }
       if (answer.state === 'streaming') answer.state = current.signal.aborted ? 'stopped' : 'done'
+      // A finished answer without any text: say so, do not leave the question unanswered.
+      if (answer.state === 'done' && answer.text === '') state.error = { kind: 'generic' }
     } catch (error) {
       if (current.signal.aborted) {
         answer.state = 'stopped'

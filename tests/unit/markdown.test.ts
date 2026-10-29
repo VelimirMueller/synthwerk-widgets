@@ -80,3 +80,11 @@ describe('safeHref', () => {
     expect(safeHref('not a url')).toBeNull()
   })
 })
+
+describe('code fences', () => {
+  it('a line that only starts with the marker - stays in the code', () => {
+    const el = render('````\n```not a close\n```\nstill code\n````\nafter')
+    expect(el.querySelector('pre code')?.textContent).toBe('```not a close\n```\nstill code')
+    expect(el.querySelector(':scope > p')?.textContent).toBe('after')
+  })
+})

@@ -12,7 +12,7 @@ export interface SessionOptions {
   apiUrl: string
   getUserToken: GetUserToken
   fetch?: (input: Request) => Promise<Response>
-  /** Milliseconds since the epoch. Tests set it. */
+  /** Clock in milliseconds since the epoch. Tests set it. */
   now?: () => number
 }
 
@@ -22,6 +22,8 @@ export const EXPIRY_MARGIN_S = 30
 interface Cached {
   token: string
   expiresAt: number
+  /** The user token it was traded for. Another user token needs a new trade. */
+  user: string
 }
 
 function trimSlash(url: string): string {
@@ -60,8 +62,11 @@ export function createSession(options: SessionOptions): WidgetSession {
   const tokenUrl = `${apiUrl}/identity/v1/apps/${encodeURIComponent(options.appId)}/widget-tokens`
   let cached: Cached | null = null
   let pending: Promise<string | null> | null = null
+  /** Bumped by reset(): an exchange that started before it never fills the cache. */
+  let generation = 0
 
   async function exchange(): Promise<string | null> {
+    const started = generation
     const user = await userToken(options.getUserToken)
     if (!user) {
       cached = null
@@ -96,16 +101,19 @@ export function createSession(options: SessionOptions): WidgetSession {
     if (!response.ok) throw problemError(body, response)
     const parsed = readWidgetToken(body)
     if (!parsed) throw problemError(null, new Response(null, { status: 502 }))
-    cached = { token: parsed.token, expiresAt: now() + parsed.expiresIn * 1000 }
+    if (started !== generation) return null
+    cached = { token: parsed.token, expiresAt: now() + parsed.expiresIn * 1000, user }
     return parsed.token
   }
 
   /** One exchange at a time: parallel callers share it. */
   function fresh(): Promise<string | null> {
-    pending ??= exchange().finally(() => {
-      pending = null
+    if (pending) return pending
+    const run: Promise<string | null> = exchange().finally(() => {
+      if (pending === run) pending = null
     })
-    return pending
+    pending = run
+    return run
   }
 
   const sw = createSynthwerk({
@@ -113,10 +121,16 @@ export function createSession(options: SessionOptions): WidgetSession {
     fetch: baseFetch,
     auth: {
       mode: 'token',
-      getToken: ({ refresh }) => {
-        if (!refresh && cached && cached.expiresAt - EXPIRY_MARGIN_S * 1000 > now()) {
-          return cached.token
+      getToken: async ({ refresh }) => {
+        const started = generation
+        const user = await userToken(options.getUserToken)
+        if (started !== generation) return null
+        if (!user) {
+          cached = null
+          return null
         }
+        const valid = cached && cached.expiresAt - EXPIRY_MARGIN_S * 1000 > now()
+        if (!refresh && valid && cached?.user === user) return cached.token
         return fresh()
       }
     }
@@ -125,7 +139,9 @@ export function createSession(options: SessionOptions): WidgetSession {
   return {
     sw,
     reset() {
+      generation++
       cached = null
+      pending = null
     }
   }
 }

@@ -8,6 +8,8 @@
 # tests/vendor.test.ts fails when a copy differs from the lock: nobody edits vendor/ by hand.
 #
 # Usage: bash scripts/vendor/sync.sh <full-commit-sha>
+# The commit must be reachable from a branch or tag: GitHub serves a shallow fetch by SHA
+# only for those (use a merged main commit).
 # Then:  pnpm install, check the diff, commit vendor/ and pnpm-lock.yaml together.
 # When the packages are on npm, replace the file: dependencies with versions and
 # delete vendor/, this script and tests/vendor.test.ts.

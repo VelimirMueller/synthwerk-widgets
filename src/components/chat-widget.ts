@@ -63,8 +63,10 @@ export const ChatWidget = defineComponent(
     const configured = computed(() => props.config.appId !== '' && props.config.apiUrl !== '')
     let check = 0
 
+    /** Ends the chat, the session and its cached widget token. The next sign-in builds new ones. */
     function dropChat(): void {
       chat.value?.dispose()
+      session.value?.reset()
       chat.value = null
       session.value = null
     }
@@ -77,7 +79,7 @@ export const ChatWidget = defineComponent(
       const token = await userToken(props.host.getUserToken)
       if (run !== check) return
       if (!token) {
-        session.value?.reset()
+        dropChat()
         auth.value = 'signed_out'
         return
       }
@@ -121,8 +123,7 @@ export const ChatWidget = defineComponent(
       const back = current.takeFailedText()
       if (back !== null && draft.value === '') draft.value = back
       if (current.state.error?.kind === 'signed_out') {
-        current.dismiss()
-        session.value?.reset()
+        dropChat()
         auth.value = 'signed_out'
       }
     }
@@ -161,6 +162,8 @@ export const ChatWidget = defineComponent(
     watch(
       () => props.host.version,
       () => {
+        // The host session changed, maybe to another user: never keep the old conversation.
+        dropChat()
         if (open.value) void checkSession()
         else auth.value = 'unknown'
       }

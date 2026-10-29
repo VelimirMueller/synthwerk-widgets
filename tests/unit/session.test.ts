@@ -85,6 +85,65 @@ describe('createSession', () => {
     expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(2)
   })
 
+  it('another user token - new trade, the old widget token is never sent', async () => {
+    let user = 'alice.jwt'
+    const api = fakeFetch([
+      routes.token((r) =>
+        json(
+          {
+            access_token: `widget-for-${r.headers.get('authorization')?.slice(7)}`,
+            token_type: 'Bearer',
+            expires_in: 600
+          },
+          201
+        )
+      ),
+      conversation()
+    ])
+    const session = createSession({
+      appId: APP_ID,
+      apiUrl: API,
+      getUserToken: () => user,
+      fetch: api.fetch
+    })
+    await createConversation(session)
+    user = 'bob.jwt'
+    await createConversation(session)
+    const llm = api.calls
+      .filter((r) => r.url.includes('/llm/'))
+      .map((r) => r.headers.get('authorization'))
+    expect(llm).toEqual(['Bearer widget-for-alice.jwt', 'Bearer widget-for-bob.jwt'])
+  })
+
+  it('reset during a running exchange - the late token is not cached', async () => {
+    let release: (r: Response) => void = () => undefined
+    let exchanges = 0
+    const api = fakeFetch([
+      routes.token(() => {
+        exchanges++
+        return exchanges === 1
+          ? new Promise<Response>((r) => {
+              release = r
+            })
+          : widgetToken()
+      }),
+      conversation()
+    ])
+    const session = createSession({
+      appId: APP_ID,
+      apiUrl: API,
+      getUserToken: () => 'user.jwt',
+      fetch: api.fetch
+    })
+    const first = createConversation(session).catch((e: unknown) => e)
+    await new Promise((r) => setTimeout(r, 0))
+    session.reset()
+    release(widgetToken())
+    expect(await first).toMatchObject({ code: 'unauthenticated' })
+    await createConversation(session)
+    expect(exchanges).toBe(2)
+  })
+
   it('identity answers 401 - signed out, no llm call', async () => {
     const { session, api } = setup(
       () => 'expired.user.jwt',

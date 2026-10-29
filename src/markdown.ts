@@ -92,9 +92,11 @@ export function renderMarkdown(source: string): VNode[] {
     const fence = FENCE.exec(line)
     if (fence) {
       const marker = fence[1] ?? '```'
+      // CommonMark: the closing fence is the same character, at least as long, and nothing else.
+      const close = new RegExp(`^\\s{0,3}\\${marker[0]}{${marker.length},}\\s*$`)
       const body: string[] = []
       i++
-      while (i < lines.length && !(lines[i] ?? '').trim().startsWith(marker)) {
+      while (i < lines.length && !close.test(lines[i] ?? '')) {
         body.push(lines[i] ?? '')
         i++
       }

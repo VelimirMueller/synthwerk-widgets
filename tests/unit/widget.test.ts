@@ -180,6 +180,79 @@ describe('<synthwerk-chat>', () => {
     expect(api.calls.some((r) => r.url.includes('/llm/'))).toBe(false)
   })
 
+  it('host session changes - the old conversation is gone', async () => {
+    stubApi(() => answer('Secret answer'))
+    const el = embed()
+    el.getUserToken = () => 'alice.jwt'
+    await openPanel(el)
+    await sendText(el, 'Hi')
+    expect(root(el).querySelectorAll('.sw-msg--user')).toHaveLength(1)
+    el.getUserToken = () => 'bob.jwt'
+    await flush()
+    expect(root(el).querySelectorAll('.sw-msg--user')).toHaveLength(0)
+    expect(root(el).textContent).not.toContain('Secret answer')
+  })
+
+  it('user switch mid-session - new chat, new widget token, new conversation', async () => {
+    const api = fakeFetch([
+      routes.token((r) =>
+        json(
+          {
+            access_token: `widget-for-${r.headers.get('authorization')?.slice(7)}`,
+            token_type: 'Bearer',
+            expires_in: 600
+          },
+          201
+        )
+      ),
+      routes.conversation(),
+      routes.message(() => answer('ok'))
+    ])
+    vi.stubGlobal('fetch', api.fetch)
+    const el = embed()
+    el.getUserToken = () => 'alice.jwt'
+    await openPanel(el)
+    await sendText(el, 'Hi')
+    el.getUserToken = () => 'bob.jwt'
+    await flush()
+    await sendText(el, 'Hello')
+    const tokens = api.calls
+      .filter((r) => r.url.endsWith('/widget-tokens'))
+      .map((r) => r.headers.get('authorization'))
+    expect(tokens).toEqual(['Bearer alice.jwt', 'Bearer bob.jwt'])
+    const llm = api.calls
+      .filter((r) => r.url.includes('/llm/'))
+      .map(
+        (r) =>
+          `${new URL(r.url).pathname.endsWith('/messages') ? 'msg' : 'conv'} ${r.headers.get('authorization')}`
+      )
+    expect(llm).toEqual([
+      'conv Bearer widget-for-alice.jwt',
+      'msg Bearer widget-for-alice.jwt',
+      'conv Bearer widget-for-bob.jwt',
+      'msg Bearer widget-for-bob.jwt'
+    ])
+    expect([...root(el).querySelectorAll('.sw-msg--user')].map((m) => m.textContent)).toEqual([
+      'You: Hello'
+    ])
+  })
+
+  it('host signs out mid-session - chat and token dropped, next sign-in trades again', async () => {
+    const api = stubApi(() => answer('ok'))
+    const el = embed()
+    el.getUserToken = () => 'alice.jwt'
+    await openPanel(el)
+    await sendText(el, 'Hi')
+    el.getUserToken = () => null
+    await flush()
+    expect($(el, '.sw-signin')).not.toBeNull()
+    el.getUserToken = () => 'alice.jwt'
+    await flush()
+    expect(root(el).querySelectorAll('.sw-msg--user')).toHaveLength(0)
+    await sendText(el, 'Again')
+    expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(2)
+  })
+
   it('lang="de" - German text', async () => {
     const el = embed({ lang: 'de' })
     expect($(el, '.sw-launcher')?.getAttribute('aria-label')).toBe('Chat öffnen')

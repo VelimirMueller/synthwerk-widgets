@@ -24,8 +24,8 @@
       "$ gh repo clone VelimirMueller/synthwerk-widgets",
       "$ cd synthwerk-widgets",
       "$ ls",
-      "LICENSE  README.md",
-      "# that is all of it today"
+      "LICENSE  README.md  assets  brand  fleet.yml  vm-brand.json",
+      "# README and brand files only. no widget code."
     ]},
     {"key": "flow", "type": "flow", "title": "ONE PAGE, LEFT TO RIGHT", "nodes": [
       {"title": "PAGE", "sub": "any website or app"},
@@ -34,7 +34,7 @@
       {"title": "SERVICES", "sub": "llm, vision, identity"}
     ], "caption": "The iframe isolates the widget from the host page. On purpose."},
     {"key": "status", "type": "status", "title": "WHAT EXISTS TODAY", "rows": [
-      {"label": "rewrite", "value": "planned in epic E3, chat vertical slice", "state": "planned"},
+      {"label": "rewrite", "value": "placeholder until epic E3 starts", "state": "planned"},
       {"label": "old code", "value": "tag legacy-final: Nuxt 3 chat page, old GPT4All server", "state": "ok"},
       {"label": "chat widget", "value": "planned", "state": "planned"},
       {"label": "vision widget", "value": "planned", "state": "planned"},
@@ -136,7 +136,7 @@
       "rows": [
         {
           "cmd": "[ STATUS ]",
-          "text": "Rewrite planned, epic E3."
+          "text": "Placeholder. Rewrite planned, epic E3."
         },
         {
           "cmd": "[ WORKS ]",
@@ -159,8 +159,8 @@
           "text": "There is no code and no test command yet."
         },
         {
-          "lead": "CI later",
-          "text": "When the rewrite lands, the blueprint CI runs on every PR."
+          "lead": "CI",
+          "text": "A docs-only CI runs on every PR. The full blueprint CI comes with the rewrite."
         },
         {
           "lead": "Stack",
@@ -227,7 +227,7 @@
         "code": [
           [
             "bash",
-            "gh repo clone VelimirMueller/synthwerk-widgets\ncd synthwerk-widgets\nls   # LICENSE and README.md, that is all of it today"
+            "gh repo clone VelimirMueller/synthwerk-widgets\ncd synthwerk-widgets\nls   # README and brand files only. No widget code until epic E3 starts."
           ]
         ]
       },

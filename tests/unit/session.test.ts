@@ -115,6 +115,50 @@ describe('createSession', () => {
     expect(llm).toEqual(['Bearer widget-for-alice.jwt', 'Bearer widget-for-bob.jwt'])
   })
 
+  it('two user tokens back to back - never one shared trade', async () => {
+    let user = 'alice.jwt'
+    const releases: ((r: Response) => void)[] = []
+    const api = fakeFetch([
+      routes.token((r) => {
+        const who = r.headers.get('authorization')?.slice(7)
+        return new Promise<Response>((resolve) => {
+          releases.push(() =>
+            resolve(
+              json(
+                { access_token: `widget-for-${who}`, token_type: 'Bearer', expires_in: 600 },
+                201
+              )
+            )
+          )
+        })
+      }),
+      conversation()
+    ])
+    const session = createSession({
+      appId: APP_ID,
+      apiUrl: API,
+      getUserToken: () => user,
+      fetch: api.fetch
+    })
+    const alice = createConversation(session).catch((e: unknown) => e)
+    await new Promise((r) => setTimeout(r, 0))
+    user = 'bob.jwt'
+    const bob = createConversation(session)
+    await new Promise((r) => setTimeout(r, 0))
+    for (const release of releases) release(new Response())
+    // Alice's trade finished after Bob asked: her token is discarded, never sent for Bob.
+    expect(await alice).toMatchObject({ code: 'unauthenticated' })
+    await bob
+    const trades = api.calls
+      .filter((r) => r.url.endsWith('/widget-tokens'))
+      .map((r) => r.headers.get('authorization'))
+    expect(trades).toEqual(['Bearer alice.jwt', 'Bearer bob.jwt'])
+    const llm = api.calls
+      .filter((r) => r.url.includes('/llm/'))
+      .map((r) => r.headers.get('authorization'))
+    expect(llm).toEqual(['Bearer widget-for-bob.jwt'])
+  })
+
   it('reset during a running exchange - the late token is not cached', async () => {
     let release: (r: Response) => void = () => undefined
     let exchanges = 0

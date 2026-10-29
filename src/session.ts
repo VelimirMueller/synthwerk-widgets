@@ -61,17 +61,16 @@ export function createSession(options: SessionOptions): WidgetSession {
   const apiUrl = trimSlash(options.apiUrl)
   const tokenUrl = `${apiUrl}/identity/v1/apps/${encodeURIComponent(options.appId)}/widget-tokens`
   let cached: Cached | null = null
-  let pending: Promise<string | null> | null = null
+  /** The running trade and the user token it was started for. */
+  let pending: { user: string; promise: Promise<string | null> } | null = null
+  /** The user token of the latest getToken call. A trade for an older one is discarded. */
+  let latestUser: string | null = null
   /** Bumped by reset(): an exchange that started before it never fills the cache. */
   let generation = 0
 
-  async function exchange(): Promise<string | null> {
+  /** Trades `user` for a widget token. */
+  async function exchange(user: string): Promise<string | null> {
     const started = generation
-    const user = await userToken(options.getUserToken)
-    if (!user) {
-      cached = null
-      return null
-    }
     let response: Response
     try {
       response = await baseFetch(
@@ -94,26 +93,28 @@ export function createSession(options: SessionOptions): WidgetSession {
     // 401: the user token is gone. Signed out, not an error.
     if (response.status === 401) {
       await response.body?.cancel().catch(() => undefined)
-      cached = null
+      if (started === generation && cached?.user === user) cached = null
       return null
     }
     const body: unknown = await response.json().catch(() => null)
     if (!response.ok) throw problemError(body, response)
     const parsed = readWidgetToken(body)
     if (!parsed) throw problemError(null, new Response(null, { status: 502 }))
-    if (started !== generation) return null
+    // A reset or another user while the trade ran: never hand out or cache this token.
+    if (started !== generation || latestUser !== user) return null
     cached = { token: parsed.token, expiresAt: now() + parsed.expiresIn * 1000, user }
     return parsed.token
   }
 
-  /** One exchange at a time: parallel callers share it. */
-  function fresh(): Promise<string | null> {
-    if (pending) return pending
-    const run: Promise<string | null> = exchange().finally(() => {
+  /** One trade per user token at a time: parallel callers with the same user token share it. */
+  function fresh(user: string): Promise<string | null> {
+    if (pending?.user === user) return pending.promise
+    const run = { user, promise: Promise.resolve<string | null>(null) }
+    run.promise = exchange(user).finally(() => {
       if (pending === run) pending = null
     })
     pending = run
-    return run
+    return run.promise
   }
 
   const sw = createSynthwerk({
@@ -125,13 +126,14 @@ export function createSession(options: SessionOptions): WidgetSession {
         const started = generation
         const user = await userToken(options.getUserToken)
         if (started !== generation) return null
+        latestUser = user
         if (!user) {
           cached = null
           return null
         }
         const valid = cached && cached.expiresAt - EXPIRY_MARGIN_S * 1000 > now()
         if (!refresh && valid && cached?.user === user) return cached.token
-        return fresh()
+        return fresh(user)
       }
     }
   })
@@ -142,6 +144,7 @@ export function createSession(options: SessionOptions): WidgetSession {
       generation++
       cached = null
       pending = null
+      latestUser = null
     }
   }
 }

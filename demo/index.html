@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>synthwerk-chat test page</title>
+    <link rel="stylesheet" href="/demo/page.css">
+  </head>
+  <body>
+    <main>
+      <h1>Host page</h1>
+      <p>The chat widget sits in the corner. The two lines below are the whole embed.</p>
+    </main>
+
+    <!-- The embed: one script tag and one custom element. -->
+    <script type="module" src="/dist/synthwerk-chat.js"></script>
+    <synthwerk-chat app-id="0192f0a0-0000-7000-8000-000000000001" api-url="/api"></synthwerk-chat>
+
+    <!-- Test only: the host hands in its user token when ?signed-in is set. -->
+    <script type="module" src="/demo/host.js"></script>
+  </body>
+</html>

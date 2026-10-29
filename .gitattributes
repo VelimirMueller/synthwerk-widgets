@@ -1,3 +1,7 @@
 # Generated SVGs embed base64 art (text outlined to paths).
 # Diff them as binary and collapse them on GitHub.
 assets/**/*.svg binary
+
+# Vendored build output of synthwerk-sdk (scripts/vendor/sync.sh). tests/unit/vendor.test.ts
+# pins every file by hash: review the lock, not the files.
+vendor/synthwerk-*/** -diff linguist-generated=true

@@ -1,0 +1,5 @@
+# Settings only: this repo is one package. No dependency needs a build script.
+# ui-vue asks for @synthwerk/tokens ^0.3.0; the vendored copy is 0.3.0 as a file: link.
+peerDependencyRules:
+  allowAny:
+    - '@synthwerk/tokens'

@@ -1,0 +1,43 @@
+{
+  "name": "synthwerk-widgets",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Synthwerk embeddable chat widget: one script tag, one custom element",
+  "license": "MIT",
+  "author": "Velimir Mueller",
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "lint": "biome ci .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test --project=chromium",
+    "build": "vite build",
+    "demo": "vite build && node tests/e2e/serve.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "@synthwerk/sdk": "file:vendor/synthwerk-sdk",
+    "@synthwerk/tokens": "file:vendor/synthwerk-tokens",
+    "@synthwerk/ui-vue": "file:vendor/synthwerk-ui-vue",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.1",
+    "@vitest/coverage-v8": "5.0.3",
+    "@vue/test-utils": "2.5.1",
+    "happy-dom": "20.14.5",
+    "typescript": "6.0.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.3"
+  }
+}

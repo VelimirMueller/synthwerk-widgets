@@ -1,0 +1,149 @@
+import { isSynthwerkError } from '@synthwerk/sdk'
+import { describe, expect, it, vi } from 'vitest'
+import { createSession, EXPIRY_MARGIN_S, userToken } from '../../src/session.ts'
+import { API, APP_ID, fakeFetch, json, routes, widgetToken } from '../support/api.ts'
+
+const conversation = () => routes.conversation()
+
+function setup(getUserToken: () => string | null, reply = () => widgetToken(600)) {
+  let clock = Date.UTC(2026, 9, 29, 12, 0, 0)
+  const api = fakeFetch([routes.token(reply), conversation()])
+  const session = createSession({
+    appId: APP_ID,
+    apiUrl: `${API}/`,
+    getUserToken,
+    fetch: api.fetch,
+    now: () => clock
+  })
+  return { session, api, tick: (s: number) => (clock += s * 1000) }
+}
+
+const createConversation = (s: ReturnType<typeof setup>['session']) =>
+  s.sw.api.llm.POST('/v1/conversations', { body: {} })
+
+describe('userToken', () => {
+  it('no hook, empty, undefined or a throwing hook - signed out', async () => {
+    expect(await userToken(null)).toBeNull()
+    expect(await userToken(() => '')).toBeNull()
+    expect(await userToken(() => undefined)).toBeNull()
+    expect(
+      await userToken(() => {
+        throw new Error('host broke')
+      })
+    ).toBeNull()
+    expect(await userToken(async () => 'u')).toBe('u')
+  })
+})
+
+describe('createSession', () => {
+  it('signed out - unauthenticated before any request', async () => {
+    const { session, api } = setup(() => null)
+    await expect(createConversation(session)).rejects.toMatchObject({ code: 'unauthenticated' })
+    expect(api.calls).toHaveLength(0)
+  })
+
+  it('signed in - trades the user token for a widget token, llm gets only the widget token', async () => {
+    const { session, api } = setup(() => 'user.jwt')
+    const { data } = await createConversation(session)
+    expect(data?.id).toBeTruthy()
+    const [exchange, llm] = api.calls
+    expect(exchange?.url).toBe(`${API}/identity/v1/apps/${APP_ID}/widget-tokens`)
+    expect(exchange?.method).toBe('POST')
+    expect(exchange?.headers.get('authorization')).toBe('Bearer user.jwt')
+    expect(exchange?.credentials).toBe('omit')
+    expect(llm?.url).toBe(`${API}/llm/v1/conversations`)
+    expect(llm?.headers.get('authorization')).toBe('Bearer widget.jwt.token')
+  })
+
+  it('valid widget token - reused, no second exchange', async () => {
+    const { session, api, tick } = setup(() => 'user.jwt')
+    await createConversation(session)
+    tick(600 - EXPIRY_MARGIN_S - 1)
+    await createConversation(session)
+    expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(1)
+  })
+
+  it('widget token near expiry - new exchange', async () => {
+    const { session, api, tick } = setup(() => 'user.jwt')
+    await createConversation(session)
+    tick(600 - EXPIRY_MARGIN_S + 1)
+    await createConversation(session)
+    expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(2)
+  })
+
+  it('parallel first calls - one shared exchange', async () => {
+    const { session, api } = setup(() => 'user.jwt')
+    await Promise.all([createConversation(session), createConversation(session)])
+    expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(1)
+  })
+
+  it('reset - next call trades again', async () => {
+    const { session, api } = setup(() => 'user.jwt')
+    await createConversation(session)
+    session.reset()
+    await createConversation(session)
+    expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(2)
+  })
+
+  it('identity answers 401 - signed out, no llm call', async () => {
+    const { session, api } = setup(
+      () => 'expired.user.jwt',
+      () => json({ code: 'unauthenticated', title: 'Unauthenticated' }, 401)
+    )
+    await expect(createConversation(session)).rejects.toMatchObject({ code: 'unauthenticated' })
+    expect(api.calls.some((r) => r.url.includes('/llm/'))).toBe(false)
+  })
+
+  it('origin not on the allow-list - origin_not_allowed', async () => {
+    const { session } = setup(
+      () => 'user.jwt',
+      () => json({ code: 'origin_not_allowed', title: 'Origin not allowed' }, 403)
+    )
+    await expect(createConversation(session)).rejects.toMatchObject({
+      code: 'origin_not_allowed',
+      status: 403
+    })
+  })
+
+  it('token body without a token - bad_gateway', async () => {
+    const { session } = setup(
+      () => 'user.jwt',
+      () => json({ token_type: 'Bearer' }, 201)
+    )
+    await expect(createConversation(session)).rejects.toMatchObject({ code: 'bad_gateway' })
+  })
+
+  it('token lifetime above 15 minutes - capped at 900 s', async () => {
+    const { session, api, tick } = setup(
+      () => 'user.jwt',
+      () => widgetToken(3600)
+    )
+    await createConversation(session)
+    tick(900)
+    await createConversation(session)
+    expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(2)
+  })
+
+  it('fetch rejects while offline - offline error', async () => {
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    const session = createSession({
+      appId: APP_ID,
+      apiUrl: API,
+      getUserToken: () => 'user.jwt',
+      fetch: () => Promise.reject(new TypeError('Failed to fetch'))
+    })
+    const error = await createConversation(session).catch((e: unknown) => e)
+    onLine.mockRestore()
+    expect(isSynthwerkError(error) && error.code).toBe('offline')
+  })
+
+  it('fetch rejects while online - network error', async () => {
+    const session = createSession({
+      appId: APP_ID,
+      apiUrl: API,
+      getUserToken: () => 'user.jwt',
+      fetch: () => Promise.reject(new TypeError('Failed to fetch'))
+    })
+    await expect(createConversation(session)).rejects.toMatchObject({ code: 'network' })
+  })
+})

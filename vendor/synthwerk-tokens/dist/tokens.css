@@ -1,0 +1,487 @@
+/* @synthwerk/tokens — generated from src/tokens.ts. Do not edit. */
+
+/* 1. Primitives and static tokens. Components never use primitives directly. */
+:root {
+  --white: #FFFFFF;
+  --black: #000000;
+  --zinc-50: #FAFAFA;
+  --zinc-100: #F4F4F5;
+  --zinc-200: #E4E4E7;
+  --zinc-300: #D4D4D8;
+  --zinc-350: #B4B4BC;
+  --zinc-400: #A1A1AA;
+  --zinc-450: #8A8A93;
+  --zinc-500: #71717A;
+  --zinc-550: #6B6B74;
+  --zinc-600: #52525B;
+  --zinc-700: #3F3F46;
+  --zinc-800: #27272A;
+  --zinc-850: #18181B;
+  --zinc-900: #121214;
+  --zinc-950: #09090B;
+  --graphite-950: #0C0C10;
+  --graphite-900: #131318;
+  --graphite-850: #18181F;
+  --graphite-800: #1E1E28;
+  --graphite-750: #1C1C28;
+  --graphite-700: #282838;
+  --graphite-500: #6B6B84;
+  --graphite-400: #8A8AA0;
+  --night-950: #0A0A0B;
+  --night-700: #26262B;
+  --emerald-300: #6EE7B7;
+  --emerald-400: #34D399;
+  --emerald-500: #10B981;
+  --emerald-700: #047857;
+  --emerald-800: #065F46;
+  --indigo-300: #A5B4FC;
+  --indigo-400: #818CF8;
+  --indigo-500: #6366F1;
+  --indigo-600: #4F46E5;
+  --indigo-700: #4338CA;
+  --indigo-800: #3730A3;
+  --violet-300: #C4B5FD;
+  --violet-400: #A78BFA;
+  --violet-500: #8B5CF6;
+  --violet-600: #7C3AED;
+  --violet-700: #6D28D9;
+  --violet-800: #5B21B6;
+  --magenta-400: #EE4FFF;
+  --fuchsia-300: #F0ABFC;
+  --fuchsia-700: #A21CAF;
+  --fuchsia-800: #86198F;
+  --pink-400: #F472B6;
+  --pink-700: #BE185D;
+  --amber-300: #FCD34D;
+  --amber-400: #FBBF24;
+  --amber-500: #F59E0B;
+  --amber-700: #B45309;
+  --amber-800: #92400E;
+  --amber-900: #78350F;
+  --red-300: #FCA5A5;
+  --red-400: #F87171;
+  --red-500: #EF4444;
+  --red-700: #B91C1C;
+  --red-800: #991B1B;
+  --blue-300: #93C5FD;
+  --blue-400: #60A5FA;
+  --blue-700: #1D4ED8;
+  --blue-800: #1E40AF;
+  --teal-400: #2DD4BF;
+  --teal-500: #14B8A6;
+  --teal-600: #0D9488;
+  --teal-700: #0F766E;
+  --edge-dark: linear-gradient(135deg, var(--teal-500), var(--violet-500));
+  --edge-light: linear-gradient(135deg, var(--teal-600), var(--violet-600));
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-warp: 550ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-spring-soft: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-card: 1.5rem;
+  --radius-page: 2rem;
+  --radius-pill: 9999px;
+  --font-display: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --text-xs: 0.75rem;
+  --text-xs-line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm-line-height: 1.25rem;
+  --text-base: 0.9375rem;
+  --text-base-line-height: 1.5rem;
+  --text-lg: 1.0625rem;
+  --text-lg-line-height: 1.625rem;
+  --text-xl: 1.25rem;
+  --text-xl-line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl-line-height: 1.875rem;
+  --text-3xl: 1.875rem;
+  --text-3xl-line-height: 2.25rem;
+  --text-5xl: 3rem;
+  --text-5xl-line-height: 3.25rem;
+}
+
+/* 2. Semantic tokens: theme × mode. */
+/* default · light */
+:root, [data-theme="default"] {
+  --bg: var(--zinc-50);
+  --surface: var(--white);
+  --surface-2: var(--zinc-100);
+  --border: var(--zinc-200);
+  --border-subtle: var(--zinc-100);
+  --border-control: var(--zinc-450);
+  --fg: var(--zinc-850);
+  --fg-muted: var(--zinc-600);
+  --fg-subtle: var(--zinc-550);
+  --accent: var(--zinc-850);
+  --accent-fg: var(--zinc-50);
+  --accent-text: var(--zinc-850);
+  --success: var(--emerald-700);
+  --warning: var(--amber-700);
+  --danger: var(--red-700);
+  --info: var(--blue-700);
+  --group-flagship-accent: var(--indigo-600);
+  --group-flagship-fg: var(--white);
+  --group-lab-accent: var(--violet-600);
+  --group-lab-fg: var(--white);
+  --group-ops-accent: var(--fuchsia-700);
+  --group-ops-fg: var(--white);
+  --group-venture-accent: var(--amber-700);
+  --group-venture-fg: var(--white);
+  --glow: 0px 0px 20px 2px color-mix(in srgb, var(--indigo-500) 15%, transparent);
+  --glow-edge: radial-gradient(36% 52% at 16% 0%, color-mix(in srgb, var(--teal-500) 14%, transparent), transparent), radial-gradient(28% 36% at 52% 0%, color-mix(in srgb, var(--red-500) 8%, transparent), transparent), radial-gradient(34% 56% at 90% 4%, color-mix(in srgb, var(--violet-500) 14%, transparent), transparent);
+  --shadow-card-v: 0px 1px 2px color-mix(in srgb, var(--black) 4%, transparent), 0px 4px 24px -8px color-mix(in srgb, var(--black) 8%, transparent);
+  --gradient-edge: var(--edge-light);
+  --texture-grid: linear-gradient(color-mix(in srgb, var(--zinc-850) 5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px, linear-gradient(90deg, color-mix(in srgb, var(--zinc-850) 5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px;
+  --badge-service-tint: 8%;
+  --service-studio-text: var(--indigo-700);
+  --service-llm-text: var(--violet-700);
+  --service-vision-text: var(--pink-700);
+  --service-pulse-text: var(--amber-800);
+  --service-identity-text: var(--blue-700);
+  --service-widgets-text: var(--teal-700);
+  color-scheme: light;
+}
+/* contrast · light */
+[data-theme="contrast"] {
+  --bg: var(--white);
+  --surface: var(--white);
+  --surface-2: var(--zinc-50);
+  --border: var(--zinc-400);
+  --border-subtle: var(--zinc-200);
+  --border-control: var(--zinc-700);
+  --fg: var(--zinc-950);
+  --fg-muted: var(--zinc-700);
+  --fg-subtle: var(--zinc-600);
+  --accent: var(--zinc-950);
+  --accent-fg: var(--white);
+  --accent-text: var(--zinc-950);
+  --success: var(--emerald-800);
+  --warning: var(--amber-900);
+  --danger: var(--red-800);
+  --info: var(--blue-800);
+  --group-flagship-accent: var(--indigo-800);
+  --group-flagship-fg: var(--white);
+  --group-lab-accent: var(--violet-800);
+  --group-lab-fg: var(--white);
+  --group-ops-accent: var(--fuchsia-800);
+  --group-ops-fg: var(--white);
+  --group-venture-accent: var(--amber-900);
+  --group-venture-fg: var(--white);
+  --glow: none;
+  --glow-edge: none;
+  --shadow-card-v: none;
+  --gradient-edge: var(--edge-light);
+  --texture-grid: none;
+  --badge-service-tint: 0%;
+  --service-studio-text: var(--indigo-700);
+  --service-llm-text: var(--violet-700);
+  --service-vision-text: var(--pink-700);
+  --service-pulse-text: var(--amber-800);
+  --service-identity-text: var(--blue-700);
+  --service-widgets-text: var(--teal-700);
+  color-scheme: light;
+}
+/* default · dark, stored choice */
+:root:not([data-theme="contrast"])[data-mode="dark"], [data-theme="default"][data-mode="dark"] {
+  --bg: var(--night-950);
+  --surface: var(--graphite-900);
+  --surface-2: var(--graphite-850);
+  --border: var(--night-700);
+  --border-subtle: var(--graphite-750);
+  --border-control: var(--graphite-500);
+  --fg: var(--zinc-200);
+  --fg-muted: var(--zinc-400);
+  --fg-subtle: var(--graphite-400);
+  --accent: var(--zinc-50);
+  --accent-fg: var(--graphite-950);
+  --accent-text: var(--zinc-50);
+  --success: var(--emerald-500);
+  --warning: var(--amber-400);
+  --danger: var(--red-400);
+  --info: var(--blue-400);
+  --group-flagship-accent: var(--indigo-400);
+  --group-flagship-fg: var(--graphite-950);
+  --group-lab-accent: var(--violet-400);
+  --group-lab-fg: var(--graphite-950);
+  --group-ops-accent: var(--magenta-400);
+  --group-ops-fg: var(--graphite-950);
+  --group-venture-accent: var(--amber-400);
+  --group-venture-fg: var(--graphite-950);
+  --glow: 0px 0px 40px -10px color-mix(in srgb, var(--indigo-500) 25%, transparent);
+  --glow-edge: radial-gradient(36% 52% at 16% 0%, color-mix(in srgb, var(--teal-500) 22%, transparent), transparent), radial-gradient(28% 36% at 52% 0%, color-mix(in srgb, var(--red-500) 14%, transparent), transparent), radial-gradient(34% 56% at 90% 4%, color-mix(in srgb, var(--violet-500) 22%, transparent), transparent);
+  --shadow-card-v: none;
+  --gradient-edge: var(--edge-dark);
+  --texture-grid: linear-gradient(color-mix(in srgb, var(--white) 4.5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px, linear-gradient(90deg, color-mix(in srgb, var(--white) 4.5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px;
+  --badge-service-tint: 14%;
+  --service-studio-text: var(--indigo-400);
+  --service-llm-text: var(--violet-400);
+  --service-vision-text: var(--pink-400);
+  --service-pulse-text: var(--amber-400);
+  --service-identity-text: var(--blue-400);
+  --service-widgets-text: var(--teal-400);
+  color-scheme: dark;
+}
+/* contrast · dark, stored choice */
+[data-theme="contrast"][data-mode="dark"] {
+  --bg: var(--black);
+  --surface: var(--zinc-950);
+  --surface-2: var(--zinc-850);
+  --border: var(--zinc-600);
+  --border-subtle: var(--zinc-800);
+  --border-control: var(--zinc-400);
+  --fg: var(--white);
+  --fg-muted: var(--zinc-300);
+  --fg-subtle: var(--zinc-350);
+  --accent: var(--white);
+  --accent-fg: var(--black);
+  --accent-text: var(--white);
+  --success: var(--emerald-300);
+  --warning: var(--amber-300);
+  --danger: var(--red-300);
+  --info: var(--blue-300);
+  --group-flagship-accent: var(--indigo-300);
+  --group-flagship-fg: var(--black);
+  --group-lab-accent: var(--violet-300);
+  --group-lab-fg: var(--black);
+  --group-ops-accent: var(--fuchsia-300);
+  --group-ops-fg: var(--black);
+  --group-venture-accent: var(--amber-300);
+  --group-venture-fg: var(--black);
+  --glow: none;
+  --glow-edge: none;
+  --shadow-card-v: none;
+  --gradient-edge: var(--edge-dark);
+  --texture-grid: none;
+  --badge-service-tint: 0%;
+  --service-studio-text: var(--indigo-400);
+  --service-llm-text: var(--violet-400);
+  --service-vision-text: var(--pink-400);
+  --service-pulse-text: var(--amber-400);
+  --service-identity-text: var(--blue-400);
+  --service-widgets-text: var(--teal-400);
+  color-scheme: dark;
+}
+/* OS dark mode: only when the stored choice is "system" or nothing. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="contrast"]):not([data-mode="light"]), [data-theme="default"]:not([data-mode="light"]) {
+    --bg: var(--night-950);
+    --surface: var(--graphite-900);
+    --surface-2: var(--graphite-850);
+    --border: var(--night-700);
+    --border-subtle: var(--graphite-750);
+    --border-control: var(--graphite-500);
+    --fg: var(--zinc-200);
+    --fg-muted: var(--zinc-400);
+    --fg-subtle: var(--graphite-400);
+    --accent: var(--zinc-50);
+    --accent-fg: var(--graphite-950);
+    --accent-text: var(--zinc-50);
+    --success: var(--emerald-500);
+    --warning: var(--amber-400);
+    --danger: var(--red-400);
+    --info: var(--blue-400);
+    --group-flagship-accent: var(--indigo-400);
+    --group-flagship-fg: var(--graphite-950);
+    --group-lab-accent: var(--violet-400);
+    --group-lab-fg: var(--graphite-950);
+    --group-ops-accent: var(--magenta-400);
+    --group-ops-fg: var(--graphite-950);
+    --group-venture-accent: var(--amber-400);
+    --group-venture-fg: var(--graphite-950);
+    --glow: 0px 0px 40px -10px color-mix(in srgb, var(--indigo-500) 25%, transparent);
+    --glow-edge: radial-gradient(36% 52% at 16% 0%, color-mix(in srgb, var(--teal-500) 22%, transparent), transparent), radial-gradient(28% 36% at 52% 0%, color-mix(in srgb, var(--red-500) 14%, transparent), transparent), radial-gradient(34% 56% at 90% 4%, color-mix(in srgb, var(--violet-500) 22%, transparent), transparent);
+    --shadow-card-v: none;
+    --gradient-edge: var(--edge-dark);
+    --texture-grid: linear-gradient(color-mix(in srgb, var(--white) 4.5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px, linear-gradient(90deg, color-mix(in srgb, var(--white) 4.5%, transparent) 1px, transparent 1px) 0 0 / 32px 32px;
+    --badge-service-tint: 14%;
+    --service-studio-text: var(--indigo-400);
+    --service-llm-text: var(--violet-400);
+    --service-vision-text: var(--pink-400);
+    --service-pulse-text: var(--amber-400);
+    --service-identity-text: var(--blue-400);
+    --service-widgets-text: var(--teal-400);
+    color-scheme: dark;
+  }
+  [data-theme="contrast"]:not([data-mode="light"]) {
+    --bg: var(--black);
+    --surface: var(--zinc-950);
+    --surface-2: var(--zinc-850);
+    --border: var(--zinc-600);
+    --border-subtle: var(--zinc-800);
+    --border-control: var(--zinc-400);
+    --fg: var(--white);
+    --fg-muted: var(--zinc-300);
+    --fg-subtle: var(--zinc-350);
+    --accent: var(--white);
+    --accent-fg: var(--black);
+    --accent-text: var(--white);
+    --success: var(--emerald-300);
+    --warning: var(--amber-300);
+    --danger: var(--red-300);
+    --info: var(--blue-300);
+    --group-flagship-accent: var(--indigo-300);
+    --group-flagship-fg: var(--black);
+    --group-lab-accent: var(--violet-300);
+    --group-lab-fg: var(--black);
+    --group-ops-accent: var(--fuchsia-300);
+    --group-ops-fg: var(--black);
+    --group-venture-accent: var(--amber-300);
+    --group-venture-fg: var(--black);
+    --glow: none;
+    --glow-edge: none;
+    --shadow-card-v: none;
+    --gradient-edge: var(--edge-dark);
+    --texture-grid: none;
+    --badge-service-tint: 0%;
+    --service-studio-text: var(--indigo-400);
+    --service-llm-text: var(--violet-400);
+    --service-vision-text: var(--pink-400);
+    --service-pulse-text: var(--amber-400);
+    --service-identity-text: var(--blue-400);
+    --service-widgets-text: var(--teal-400);
+    color-scheme: dark;
+  }
+}
+
+/* 2b. Group accent and style (VM. studio). Values: vm-brand brand.json (brand-groups.json). */
+/* Deprecated aliases for one release: vlm = lab, rig = ops. */
+:where(:root, [data-theme], [data-group]) {
+  --accent-2: var(--group-flagship-accent);
+  --accent-2-fg: var(--group-flagship-fg);
+  --accent-2-text: var(--group-flagship-accent);
+  --ring: var(--group-flagship-accent);
+  --group-fill: var(--indigo-500);
+  --group-font-display: var(--font-display);
+  --group-corner: 1;
+  --group-ornament: 0;
+  --group-tracking: 0em;
+}
+[data-group="flagship"], [data-group="flagship"] [data-theme]:not([data-group]) {
+  --accent-2: var(--group-flagship-accent);
+  --accent-2-fg: var(--group-flagship-fg);
+  --accent-2-text: var(--group-flagship-accent);
+  --ring: var(--group-flagship-accent);
+  --group-fill: var(--indigo-500);
+  --group-font-display: var(--font-display);
+  --group-corner: 1;
+  --group-ornament: 0;
+  --group-tracking: 0em;
+}
+[data-group="lab"], [data-group="lab"] [data-theme]:not([data-group]), [data-group="vlm"], [data-group="vlm"] [data-theme]:not([data-group]) {
+  --accent-2: var(--group-lab-accent);
+  --accent-2-fg: var(--group-lab-fg);
+  --accent-2-text: var(--group-lab-accent);
+  --ring: var(--group-lab-accent);
+  --group-fill: var(--violet-500);
+  --group-font-display: var(--font-display);
+  --group-corner: 1;
+  --group-ornament: 0;
+  --group-tracking: 0em;
+}
+[data-group="ops"], [data-group="ops"] [data-theme]:not([data-group]), [data-group="rig"], [data-group="rig"] [data-theme]:not([data-group]) {
+  --accent-2: var(--group-ops-accent);
+  --accent-2-fg: var(--group-ops-fg);
+  --accent-2-text: var(--group-ops-accent);
+  --ring: var(--group-ops-accent);
+  --group-fill: var(--magenta-400);
+  --group-font-display: var(--font-display);
+  --group-corner: 1;
+  --group-ornament: 0;
+  --group-tracking: 0em;
+}
+[data-group="venture"], [data-group="venture"] [data-theme]:not([data-group]) {
+  --accent-2: var(--group-venture-accent);
+  --accent-2-fg: var(--group-venture-fg);
+  --accent-2-text: var(--group-venture-accent);
+  --ring: var(--group-venture-accent);
+  --group-fill: var(--amber-500);
+  --group-font-display: "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;
+  --group-corner: 0.15;
+  --group-ornament: 1;
+  --group-tracking: 0.02em;
+}
+
+/* 3. Service accent: the only per-service variation. */
+:where(:root, [data-theme]) {
+  --service-accent: var(--accent);
+  --service-accent-text: var(--accent-text);
+}
+[data-service="studio"] {
+  --service-accent: var(--indigo-400);
+  --service-accent-text: var(--service-studio-text);
+}
+[data-service="llm"] {
+  --service-accent: var(--violet-400);
+  --service-accent-text: var(--service-llm-text);
+}
+[data-service="vision"] {
+  --service-accent: var(--pink-400);
+  --service-accent-text: var(--service-vision-text);
+}
+[data-service="pulse"] {
+  --service-accent: var(--amber-400);
+  --service-accent-text: var(--service-pulse-text);
+}
+[data-service="identity"] {
+  --service-accent: var(--blue-400);
+  --service-accent-text: var(--service-identity-text);
+}
+[data-service="widgets"] {
+  --service-accent: var(--teal-400);
+  --service-accent-text: var(--service-widgets-text);
+}
+
+/* 4. Component tokens. Declared on every scope, so nested themes resolve. */
+:root, [data-theme], [data-group], [data-service] {
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--accent-fg);
+  --btn-primary-ring: var(--ring);
+  --btn-secondary-bg: transparent;
+  --btn-secondary-fg: var(--fg);
+  --btn-secondary-border: var(--border-control);
+  --link-fg: var(--accent-text);
+  --link-fg-hover: var(--accent-2-text);
+  --card-bg: var(--surface);
+  --card-border: var(--border);
+  --card-shadow: var(--shadow-card-v);
+  --card-radius: var(--radius-card);
+  --input-bg: var(--surface);
+  --input-border: var(--border-control);
+  --select-border: var(--border-control);
+  --checkbox-border: var(--border-control);
+  --input-border-focus: var(--ring);
+  --badge-service-bg: color-mix(in oklch, var(--service-accent) var(--badge-service-tint), transparent);
+  --badge-service-fg: var(--service-accent-text);
+  --focus-outline: 2px solid var(--ring);
+  --focus-outline-offset: 2px;
+}
+
+/* 5. Motion safety. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0.01ms;
+    --duration-fast: 0.01ms;
+    --duration-base: 0.01ms;
+    --duration-slow: 0.01ms;
+    --duration-warp: 0.01ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (hover: none) {
+  * {
+    backdrop-filter: none !important;
+  }
+}

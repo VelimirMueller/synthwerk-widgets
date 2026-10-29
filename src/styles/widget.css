@@ -1,0 +1,307 @@
+/* synthwerk-widgets: chat widget layout. Colours, type and radii come from @synthwerk/tokens only. */
+
+:host {
+  all: initial;
+}
+
+.sw-root {
+  --sw-gap: 1rem;
+  --sw-edge: 1.5rem;
+  --sw-launcher-size: 3.5rem;
+  --sw-panel-width: 23.75rem;
+  --sw-panel-height: 37.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+  color: var(--fg);
+}
+
+.sw-root *,
+.sw-root *::before,
+.sw-root *::after {
+  box-sizing: border-box;
+}
+
+.sw-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Launcher: a round button at the page edge. */
+.sw-launcher,
+.sw-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--motion-ease-standard);
+}
+
+.sw-launcher {
+  position: fixed;
+  bottom: var(--sw-edge);
+  right: var(--sw-edge);
+  z-index: 2147483000;
+  width: var(--sw-launcher-size);
+  height: var(--sw-launcher-size);
+  border-radius: var(--radius-pill);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.sw-root[data-position="bottom-left"] .sw-launcher {
+  right: auto;
+  left: var(--sw-edge);
+}
+
+.sw-launcher:hover {
+  transform: translateY(-1px);
+}
+
+.sw-launcher:focus-visible,
+.sw-icon-button:focus-visible,
+.sw-md a:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.sw-icon-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg);
+}
+
+/* Panel: a card above the launcher on desktop. */
+.sw-panel {
+  position: fixed;
+  bottom: calc(var(--sw-edge) + var(--sw-launcher-size) + var(--sw-gap));
+  right: var(--sw-edge);
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  width: var(--sw-panel-width);
+  height: min(var(--sw-panel-height), calc(100vh - 8rem));
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.sw-root[data-position="bottom-left"] .sw-panel {
+  right: auto;
+  left: var(--sw-edge);
+}
+
+.sw-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sw-gap);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sw-panel__title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.sw-panel__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Messages */
+.sw-messages {
+  flex: 1;
+  margin: 0;
+  padding: 1rem;
+  overflow-y: auto;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sw-msg {
+  max-width: 85%;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+}
+
+.sw-msg--user {
+  align-self: flex-end;
+  background: var(--surface-2);
+}
+
+.sw-msg--assistant {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+}
+
+.sw-msg--error {
+  border-color: var(--border-control);
+}
+
+.sw-msg__text,
+.sw-msg__note {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.sw-msg__note {
+  margin-top: 0.25rem;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.sw-typing::after {
+  content: "▍";
+  color: var(--fg-muted);
+  animation: sw-blink 1s steps(2, start) infinite;
+}
+
+@keyframes sw-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* Safe Markdown */
+.sw-md > :first-child {
+  margin-top: 0;
+}
+
+.sw-md > :last-child {
+  margin-bottom: 0;
+}
+
+.sw-md p,
+.sw-md ul,
+.sw-md ol,
+.sw-md pre,
+.sw-md blockquote {
+  margin: 0 0 0.5rem;
+}
+
+.sw-md ul,
+.sw-md ol {
+  padding-left: 1.25rem;
+}
+
+.sw-md .sw-md-heading {
+  font-weight: 600;
+}
+
+.sw-md code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.sw-md pre {
+  padding: 0.5rem 0.75rem;
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.sw-md blockquote {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border-control);
+  color: var(--fg-muted);
+}
+
+.sw-md a {
+  color: var(--link-fg);
+}
+
+/* Error, offline and quota states */
+.sw-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 1rem 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.sw-banner p {
+  margin: 0;
+}
+
+.sw-banner--not_allowed {
+  margin-top: 1rem;
+}
+
+/* Composer */
+.sw-composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.sw-composer .sw-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sign-in */
+.sw-signin {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+}
+
+.sw-signin__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--text-lg-line-height);
+  font-weight: 600;
+}
+
+.sw-signin__text {
+  margin: 0 0 0.5rem;
+  color: var(--fg-muted);
+}
+
+.sw-signin a.sw-button {
+  text-decoration: none;
+}
+
+/* Below 640 px: the panel is a full-screen sheet; the close button sits in its header. */
+@media (max-width: 639.98px) {
+  .sw-panel {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .sw-root--open .sw-launcher {
+    display: none;
+  }
+}

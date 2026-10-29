@@ -9,3 +9,9 @@ dist/
 coverage/
 bin/
 .worktrees/
+!vendor/**/dist/
+.claude/settings.local.json
+playwright-report/
+test-results/
+e2e-junit.xml
+*.tsbuildinfo

@@ -1,6 +1,6 @@
-import { isSynthwerkError } from '@synthwerk/sdk'
+import { createWidgetSession, isSynthwerkError, WIDGET_TOKEN_EXPIRY_MARGIN_S } from '@synthwerk/sdk'
 import { describe, expect, it, vi } from 'vitest'
-import { createSession, EXPIRY_MARGIN_S, userToken } from '../../src/session.ts'
+import { userToken } from '../../src/session.ts'
 import { API, APP_ID, fakeFetch, json, routes, widgetToken } from '../support/api.ts'
 
 const conversation = () => routes.conversation()
@@ -8,7 +8,7 @@ const conversation = () => routes.conversation()
 function setup(getUserToken: () => string | null, reply = () => widgetToken(600)) {
   let clock = Date.UTC(2026, 9, 29, 12, 0, 0)
   const api = fakeFetch([routes.token(reply), conversation()])
-  const session = createSession({
+  const session = createWidgetSession({
     appId: APP_ID,
     apiUrl: `${API}/`,
     getUserToken,
@@ -35,7 +35,7 @@ describe('userToken', () => {
   })
 })
 
-describe('createSession', () => {
+describe('createWidgetSession (widget rules)', () => {
   it('signed out - unauthenticated before any request', async () => {
     const { session, api } = setup(() => null)
     await expect(createConversation(session)).rejects.toMatchObject({ code: 'unauthenticated' })
@@ -58,7 +58,7 @@ describe('createSession', () => {
   it('valid widget token - reused, no second exchange', async () => {
     const { session, api, tick } = setup(() => 'user.jwt')
     await createConversation(session)
-    tick(600 - EXPIRY_MARGIN_S - 1)
+    tick(600 - WIDGET_TOKEN_EXPIRY_MARGIN_S - 1)
     await createConversation(session)
     expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(1)
   })
@@ -66,7 +66,7 @@ describe('createSession', () => {
   it('widget token near expiry - new exchange', async () => {
     const { session, api, tick } = setup(() => 'user.jwt')
     await createConversation(session)
-    tick(600 - EXPIRY_MARGIN_S + 1)
+    tick(600 - WIDGET_TOKEN_EXPIRY_MARGIN_S + 1)
     await createConversation(session)
     expect(api.calls.filter((r) => r.url.endsWith('/widget-tokens'))).toHaveLength(2)
   })
@@ -100,7 +100,7 @@ describe('createSession', () => {
       ),
       conversation()
     ])
-    const session = createSession({
+    const session = createWidgetSession({
       appId: APP_ID,
       apiUrl: API,
       getUserToken: () => user,
@@ -134,7 +134,7 @@ describe('createSession', () => {
       }),
       conversation()
     ])
-    const session = createSession({
+    const session = createWidgetSession({
       appId: APP_ID,
       apiUrl: API,
       getUserToken: () => user,
@@ -173,7 +173,7 @@ describe('createSession', () => {
       }),
       conversation()
     ])
-    const session = createSession({
+    const session = createWidgetSession({
       appId: APP_ID,
       apiUrl: API,
       getUserToken: () => 'user.jwt',
@@ -229,7 +229,7 @@ describe('createSession', () => {
 
   it('fetch rejects while offline - offline error', async () => {
     const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
-    const session = createSession({
+    const session = createWidgetSession({
       appId: APP_ID,
       apiUrl: API,
       getUserToken: () => 'user.jwt',
@@ -241,7 +241,7 @@ describe('createSession', () => {
   })
 
   it('fetch rejects while online - network error', async () => {
-    const session = createSession({
+    const session = createWidgetSession({
       appId: APP_ID,
       apiUrl: API,
       getUserToken: () => 'user.jwt',

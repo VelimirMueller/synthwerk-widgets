@@ -149,3 +149,35 @@ export function fromFetchFailure(cause, signal) {
     const nav = globalThis.navigator;
     return clientError(nav?.onLine === false ? 'offline' : 'network', null, cause);
 }
+/**
+ * Codes for an answer without a problem body: the edge (Traefik) and vision (FastAPI
+ * `{detail}`) answer with a status only. Branch on the status, never on `detail`.
+ */
+const CODE_BY_STATUS = {
+    401: 'unauthenticated',
+    403: 'forbidden',
+    413: 'input_too_large',
+    415: 'unsupported_media_type',
+    429: 'rate_limited',
+    503: 'model_unavailable',
+    507: 'storage_full'
+};
+/**
+ * The SynthwerkError of a typed-client result that is not 2xx (`{ error, response }` of
+ * `sw.api.*`). A problem body gives its code (and `quota`); any other body gives a code
+ * from the status. The body itself never reaches the error.
+ */
+export function errorFromResult(body, response) {
+    const status = response?.status ?? null;
+    const retryAfter = response ? retryAfterOf(response) : undefined;
+    const problem = fromProblem(body, status, retryAfter);
+    if (problem)
+        return problem;
+    const code = (status !== null && CODE_BY_STATUS[status]) || 'bad_gateway';
+    return new SynthwerkError({
+        code,
+        title: code,
+        status,
+        ...(retryAfter === undefined ? {} : { retryAfter })
+    });
+}

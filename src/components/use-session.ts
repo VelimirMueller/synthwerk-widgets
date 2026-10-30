@@ -1,7 +1,8 @@
-// The sign-in state of a widget and its session (src/session.ts), shared by every widget.
+// The sign-in state of a widget and its session (SDK createWidgetSession), shared by every widget.
 // Each host session change drops the session and its cached widget token: a new user never
 // sees or uses the data of the old one.
 
+import { createWidgetSession, type WidgetSession } from '@synthwerk/sdk'
 import { SwButton } from '@synthwerk/ui-vue'
 import {
   computed,
@@ -14,7 +15,7 @@ import {
   type VNode,
   watch
 } from 'vue'
-import { createSession, type GetUserToken, userToken, type WidgetSession } from '../session.ts'
+import { type GetUserToken, userToken } from '../session.ts'
 
 /** What the element hands to the widget. `version` changes when the host session may have changed. */
 export interface WidgetHost {
@@ -86,7 +87,7 @@ export function useSession(
     }
     auth.value = 'signed_in'
     if (!session.value) {
-      const created = createSession({
+      const created = createWidgetSession({
         appId: props.config().appId,
         apiUrl: props.config().apiUrl,
         getUserToken: () => props.host.getUserToken?.() ?? null,

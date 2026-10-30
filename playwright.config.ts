@@ -20,5 +20,17 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: { PORT: String(PORT) }
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // New headless Chromium: the headless shell has no camera capture (NotSupportedError).
+        // `playwright install chromium` (local and the fleet e2e stage) installs both builds.
+        channel: 'chromium',
+        // A fake camera (a test pattern) for the vision widget. Permission stays per test.
+        launchOptions: { args: ['--use-fake-device-for-media-stream'] }
+      }
+    }
+  ]
 })

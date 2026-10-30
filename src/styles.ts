@@ -2,6 +2,7 @@
 // Constructable style sheets need no `style-src 'unsafe-inline'` (CSP-friendly).
 import tokensCss from '@synthwerk/tokens/tokens.css?inline'
 import uiCss from '@synthwerk/ui-vue/ui.css?inline'
+import visionCss from './styles/vision.css?inline'
 import widgetCss from './styles/widget.css?inline'
 
 /**
@@ -13,6 +14,9 @@ export function scopeToWidget(css: string): string {
 }
 
 export const widgetStyles = `${scopeToWidget(tokensCss)}\n${scopeToWidget(uiCss)}\n${widgetCss}`
+
+/** <synthwerk-vision>: the shared widget styles plus the vision card. */
+export const visionStyles = `${widgetStyles}\n${visionCss}`
 
 const sheets = new Map<string, CSSStyleSheet>()
 

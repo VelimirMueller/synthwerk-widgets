@@ -26,6 +26,11 @@ export const CSP = [
 
 createServer(async (req, res) => {
   const path = new URL(req.url ?? '/', 'http://localhost').pathname
+  // The browser asks for an icon on its own. No icon: no 404 in the console.
+  if (path === '/favicon.ico') {
+    res.writeHead(204).end()
+    return
+  }
   const file = path === '/' ? '/demo/index.html' : path
   const safe = normalize(file)
   if (!/^\/(demo|dist)\/[\w.-]+$/.test(safe)) {

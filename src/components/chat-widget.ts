@@ -18,21 +18,11 @@ import { type AttributeConfig, resolveConfig, type WidgetConfig } from '../confi
 import type { WidgetError } from '../errors.ts'
 import { formatTime, type Messages, messagesFor } from '../i18n.ts'
 import { renderMarkdown } from '../markdown.ts'
-import { createSession, type GetUserToken, userToken, type WidgetSession } from '../session.ts'
 import { loadSettings, type StudioSettings } from '../settings.ts'
 import { chatIcon, closeIcon } from './icons.ts'
+import { renderSignIn, useSession, type WidgetHost } from './use-session.ts'
 
-/** What the element hands to the widget. `version` changes when the host session may have changed. */
-export interface WidgetHost {
-  version: number
-  getUserToken: GetUserToken | null
-  /** Browser languages, best first (`navigator.languages`). */
-  languages: readonly string[]
-  requestSignIn: () => void
-  fetch?: (input: Request) => Promise<Response>
-}
-
-export type AuthState = 'unknown' | 'checking' | 'signed_in' | 'signed_out'
+export type { AuthState, WidgetHost } from './use-session.ts'
 
 function errorText(t: Messages, error: WidgetError, lang: WidgetConfig['lang']): string {
   switch (error.kind) {
@@ -61,16 +51,30 @@ export const ChatWidget = defineComponent(
     const config = computed<WidgetConfig>(() =>
       resolveConfig(props.attrs, studio.value, props.host.languages)
     )
-    const auth = ref<AuthState>('unknown')
     const online = ref(globalThis.navigator?.onLine !== false)
     const draft = ref('')
-    const session = shallowRef<WidgetSession | null>(null)
     const chat = shallowRef<Chat | null>(null)
     const panel = ref<HTMLElement | null>(null)
     const t = computed(() => messagesFor(config.value.lang))
-    const configured = computed(() => config.value.appId !== '' && config.value.apiUrl !== '')
-    let check = 0
     let load = 0
+    const {
+      auth,
+      configured,
+      check: checkSession,
+      signOut
+    } = useSession(
+      { config: () => config.value, host: props.host },
+      {
+        active: () => open.value,
+        onStart: (session) => {
+          chat.value = createChat({ sw: session.sw })
+        },
+        onStop: () => {
+          chat.value?.dispose()
+          chat.value = null
+        }
+      }
+    )
 
     /** Loads the studio settings once per app. Until then the launcher stays hidden. */
     async function loadStudio(): Promise<void> {
@@ -83,39 +87,6 @@ export const ChatWidget = defineComponent(
         ...(props.host.fetch ? { fetch: props.host.fetch } : {})
       })
       if (run === load) studio.value = settings
-    }
-
-    /** Ends the chat, the session and its cached widget token. The next sign-in builds new ones. */
-    function dropChat(): void {
-      chat.value?.dispose()
-      session.value?.reset()
-      chat.value = null
-      session.value = null
-    }
-
-    /** Asks the host for the user token. No token: sign-in view and no request at all. */
-    async function checkSession(): Promise<void> {
-      const run = ++check
-      if (!configured.value) return
-      auth.value = 'checking'
-      const token = await userToken(props.host.getUserToken)
-      if (run !== check) return
-      if (!token) {
-        dropChat()
-        auth.value = 'signed_out'
-        return
-      }
-      auth.value = 'signed_in'
-      if (!chat.value) {
-        const created = createSession({
-          appId: config.value.appId,
-          apiUrl: config.value.apiUrl,
-          getUserToken: () => props.host.getUserToken?.() ?? null,
-          ...(props.host.fetch ? { fetch: props.host.fetch } : {})
-        })
-        session.value = created
-        chat.value = createChat({ sw: created.sw })
-      }
     }
 
     function focusInput(): void {
@@ -144,10 +115,7 @@ export const ChatWidget = defineComponent(
       await current.send(text)
       const back = current.takeFailedText()
       if (back !== null && draft.value === '') draft.value = back
-      if (current.state.error?.kind === 'signed_out') {
-        dropChat()
-        auth.value = 'signed_out'
-      }
+      if (current.state.error?.kind === 'signed_out') signOut()
     }
 
     function onKeydown(event: KeyboardEvent): void {
@@ -171,25 +139,13 @@ export const ChatWidget = defineComponent(
     onBeforeUnmount(() => {
       globalThis.removeEventListener?.('online', setOnline)
       globalThis.removeEventListener?.('offline', setOffline)
-      dropChat()
     })
 
+    // New app: new studio settings. useSession drops the session for the same change.
     watch(
       () => [props.attrs.appId, props.attrs.apiUrl],
       () => {
         void loadStudio()
-        dropChat()
-        auth.value = 'unknown'
-        if (open.value) void checkSession()
-      }
-    )
-    watch(
-      () => props.host.version,
-      () => {
-        // The host session changed, maybe to another user: never keep the old conversation.
-        dropChat()
-        if (open.value) void checkSession()
-        else auth.value = 'unknown'
       }
     )
 
@@ -212,25 +168,6 @@ export const ChatWidget = defineComponent(
             : null
         ]
       )
-    }
-
-    function renderSignIn(text: Messages): VNode {
-      const action = config.value.signInUrl
-        ? h(
-            'a',
-            { class: 'sw-button sw-button--primary sw-button--md', href: config.value.signInUrl },
-            text.signIn
-          )
-        : h(
-            SwButton,
-            { class: 'sw-signin__button', onClick: () => props.host.requestSignIn() },
-            () => text.signIn
-          )
-      return h('div', { class: 'sw-signin' }, [
-        h('p', { class: 'sw-signin__title' }, text.signInTitle),
-        h('p', { class: 'sw-signin__text' }, text.signInText),
-        action
-      ])
     }
 
     function renderBanner(text: Messages): VNode | null {
@@ -303,7 +240,7 @@ export const ChatWidget = defineComponent(
           text.notAllowed
         )
       }
-      if (auth.value === 'signed_out') return renderSignIn(text)
+      if (auth.value === 'signed_out') return renderSignIn(config.value.signInUrl, props.host, text)
       if (auth.value === 'signed_in') return renderChat(text)
       return undefined
     }

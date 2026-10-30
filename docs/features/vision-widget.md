@@ -24,7 +24,7 @@ updated: 2026-10-30
 - `dist/synthwerk-vision.js` is one ES module. It holds Vue, `@synthwerk/sdk`, `@synthwerk/ui-vue` and the styles. A page that uses only the chat does not load it.
 - The element renders an inline card into an open shadow root. Host CSS and widget CSS do not mix.
 - The look comes from the attributes only. The card does not load the studio widget settings (`widget-settings`) of the chat launcher.
-- The SRI script (`scripts/release/sri.ts`) covers the chat bundle only. The vision bundle gets no `release.json` yet.
+- The SRI script (`scripts/release/sri.ts`) covers both bundles. `dist/release.json` lists the versioned path, size and integrity of `synthwerk-vision.js` next to the chat bundle (widgets#39).
 - The sign-in, the widget token and the session rules are the same as in the [chat widget](chat-widget.md): same code (`src/session.ts`, `src/components/use-session.ts`).
 - Each host session change drops the result, the photo, the session and the cached widget token, and stops the camera.
 - "Choose photo" opens the file picker. Any picture the browser can decode works (JPEG, PNG, WebP, HEIC in Safari).
@@ -46,9 +46,12 @@ updated: 2026-10-30
 2. Add the snippet to the page:
 
    ```html
-   <script type="module" src="https://<host>/synthwerk-vision.js"></script>
+   <script type="module" src="https://<widget host>/widgets/v0.2.0/synthwerk-vision.js"
+           integrity="sha384-…" crossorigin="anonymous"></script>
    <synthwerk-vision app-id="<app id>" api-url="https://<edge>"></synthwerk-vision>
    ```
+
+   Take `integrity` from `release.json` or the release notes of that version. Same URL scheme and host headers as the [chat bundle](chat-widget.md#hosting-and-sri).
 
 3. After sign-in, hand in the user token. Set it again after sign-out:
 
@@ -78,6 +81,23 @@ updated: 2026-10-30
 | `refreshSession()` | method | The host session changed. The widget asks `getUserToken` again. |
 | `synthwerk-sign-in` | event | The visitor pressed "Sign in". Bubbles out of the shadow root. |
 
+## Decision: which page installs as the vision PWA (widgets#38)
+
+The feature catalogue says "Vision widget installs as a PWA" (synthwerk#43). `<synthwerk-vision>` is an element in a host page, so the question is which page installs.
+
+| Option | Result | Reason |
+|---|---|---|
+| A vision page in studio | no | Studio signs in through its server (BFF): the user token never reaches the browser, and the widget needs it there. Studio is the admin console for Ada, not the app for Max. Its origin would have to be an app origin of every org |
+| A page in this repo on the widget host | no | The widget host serves immutable, versioned bundles with `Access-Control-Allow-Origin: *`; an app page there mixes concerns. It needs its own OIDC client, and one Synthwerk origin cannot be the app origin of every org (the widget token binds to one app and its origin) |
+| The host page of the customer app | yes | It already has the origin on the allow-list, its own sign-in and the user token. The widget needs no new origin, client, CORS entry or token rule |
+
+- Page: the customer page that holds `<synthwerk-vision>`. The customer adds a web app manifest (`display: standalone`, own name and icons). Synthwerk sends no manifest and no icons.
+- Origin: the origin of that page. It is on the allow-list of the app, as for every widget.
+- Sign-in: the sign-in of the host app. It hands in the user token through `getUserToken`, as today.
+- Offline: no. Labels need the vision service; offline, the card shows its offline state. Only "add to home screen".
+- Service worker: none from Synthwerk. A host service worker must not cache `/identity`, `/vision` or the widget token, and must not change the bytes of the versioned bundle (SRI).
+- Build follow-up: an installed-page check (standalone display mode, camera, offline state) and the manifest guide in "How to use".
+
 ## Rules and limits
 
 | Rule | Value |
@@ -104,6 +124,7 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 | Status | Problem type | Cause |
 |---|---|---|
 | 401 | `unauthenticated` | Widget token refused twice. The widget shows sign-in again. |
+| 403 | `origin_not_allowed` | Identity refused the token trade: the page origin is not on the app allow-list. "This site cannot use image labels." Readable in a real browser (widgets#41). |
 | 403 | `forbidden` | Page origin is not the origin of the widget token. "This site cannot use image labels." |
 | 413 | `input_too_large` | The edge or vision refused the size. "The photo is too large." |
 | 415 | `unsupported_media_type` | Not a picture vision can read. Also when the browser cannot decode the file. |
@@ -119,6 +140,8 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 - `tests/unit/vision-widget.test.ts` — `camera - starts on click, photo taken, every track stopped before the upload`
 - `tests/unit/vision-widget.test.ts` — `host signs out - camera stops, result dropped, sign-in view`
 - `tests/unit/vision-widget.test.ts` — `save-photos and the storage quota is full (507) - labels stay, quota note`
+- `tests/unit/vision-widget.test.ts` — `identity refuses the trade with 403 origin_not_allowed - not-allowed state, no vision call`
+- `tests/unit/release.test.ts` — `both bundles - versioned path, size and sha384 integrity of each`, `job summary - one row per bundle with path, size and integrity, then both snippets`
 - `tests/unit/vision-image.test.ts` — `noisy photo - steps down until the JPEG is below the upload limit`
 - `tests/unit/vision-camera.test.ts` — `stop while the browser asks - the late stream stops at once`
 - `tests/unit/vision-api.test.ts` — `classify - multipart photo to <apiUrl>/vision with the widget token only`
@@ -133,3 +156,4 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 |---|---|
 | 2026-10-30 | First version (synthwerk#43). |
 | 2026-10-30 | Calls go through the SDK vision client and its generated types (synthwerk-sdk#19). No change for hosts. |
+| 2026-10-30 | Vision bundle in `release.json` with SRI, snippet with `integrity` (widgets#39). Not-allowed state readable in a real browser (widgets#41). Decision on the PWA page (widgets#38). |

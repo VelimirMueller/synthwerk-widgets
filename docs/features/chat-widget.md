@@ -91,7 +91,7 @@ updated: 2026-10-30
 ## Hosting and SRI
 
 - URL scheme: `https://<widget host>/widgets/v<X.Y.Z>/synthwerk-chat.js`. One path per version. The bytes behind a path never change.
-- `pnpm build && node scripts/release/sri.ts` writes `dist/release.json` (version, path, size, `sha384` integrity). CI puts the hash in the build job summary.
+- `pnpm build && node scripts/release/sri.ts` writes `dist/release.json`: the version, then path, size and `sha384` integrity of each bundle (`chat`, `vision`). CI puts both in the build job summary (widgets#39).
 - The build is reproducible: the same commit gives the same hash.
 - Snippet with SRI:
 
@@ -111,7 +111,7 @@ updated: 2026-10-30
 | jsDelivr from npm or a GitHub tag | not now | New vendor (third-party.md needs a line first). npm needs a publish identity (fleet GOV-ENV-10) |
 | Edge on the IONOS VPS, versioned path from an image | yes | Provider in use. Same edge as `/identity` and `/llm`. Own headers |
 
-- Store of record: one GitHub Release per tag `vX.Y.Z`, with `synthwerk-chat.js`, `release.json` and the integrity in the notes.
+- Store of record: one GitHub Release per tag `vX.Y.Z`, with `synthwerk-chat.js`, `synthwerk-vision.js`, `release.json` and both integrity values in the notes.
 - Serving: a small static image (unprivileged nginx) under `/widgets/` on the edge. It holds every released version. The build of the image fetches each release asset and checks it against its recorded integrity.
 
 ### Open before the URL is live
@@ -145,7 +145,7 @@ updated: 2026-10-30
 | Status | Problem type | Cause |
 |---|---|---|
 | 401 | `unauthenticated` | User token gone. The widget shows sign-in again. |
-| 403 | `origin_not_allowed`, `forbidden` | Page origin not on the app allow-list. "This site cannot use the chat." |
+| 403 | `origin_not_allowed`, `forbidden` | Page origin not on the app allow-list. "This site cannot use the chat." Identity makes this refusal of the token trade readable to the page, so a real browser shows it too (widgets#41). |
 | 413 | `input_too_large` | Message too long. |
 | 429 | `quota_exhausted` | Quota used up. The input locks. The reset time comes from `Retry-After`. |
 | 429 | `too_many_streams`, `rate_limited` | "The chat is busy." |
@@ -161,6 +161,7 @@ updated: 2026-10-30
 - `tests/unit/widget.test.ts` — `studio settings - greeting, position, mode, theme, accent and language of the app`
 - `tests/unit/widget.test.ts` — `greeting with HTML - shown as text, no element made`
 - `tests/unit/widget.test.ts` — `settings load fails - defaults, the launcher shows, no error`
+- `tests/unit/widget.test.ts` — `identity refuses the trade with 403 origin_not_allowed - not-allowed state, no llm call`
 - `tests/e2e/chat.spec.ts` — `studio settings - greeting, corner and language of the app`
 - `tests/unit/widget.test.ts` — `signed-out visitor opens the chat - sign-in view, only the public settings request`
 - `tests/unit/widget.test.ts` — `signed-in user - the answer streams into the view`
@@ -180,3 +181,4 @@ updated: 2026-10-30
 | 2026-10-30 | Studio settings (widgets#34). Versioned URL scheme and SRI in CI (widgets#32). Version 0.2.0. |
 | 2026-10-30 | The element base (`src/widget-element.ts`) and the sign-in state (`src/components/use-session.ts`) are shared with `<synthwerk-vision>`. No change for hosts. A 413, 415, 503 or 507 answer without a problem body maps to a code from its status (synthwerk#43). |
 | 2026-10-30 | The widget-token trade goes through the SDK `requestWidgetToken` (synthwerk-sdk#18). Same request, same session rules. No change for hosts. |
+| 2026-10-30 | `release.json` lists both bundles (widgets#39). The not-allowed state shows in a real browser: identity answers the token trade preflight for every origin and makes its 403 `origin_not_allowed` readable (widgets#41). No change for hosts. |

@@ -1,0 +1,41 @@
+{
+  "name": "@synthwerk/ui-vue",
+  "version": "0.1.0",
+  "description": "Synthwerk UI components for Vue 3.5 (synthwerk-ui). Read @synthwerk/tokens only",
+  "license": "MIT",
+  "author": "Velimir Mueller",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VelimirMueller/synthwerk-sdk.git",
+    "directory": "packages/ui-vue"
+  },
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ui.css": "./dist/ui.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@synthwerk/tokens": "^0.3.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@synthwerk/tokens": "0.3.0",
+    "vue": "3.5.43"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/build.ts"
+  }
+}

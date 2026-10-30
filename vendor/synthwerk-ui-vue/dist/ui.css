@@ -1,0 +1,339 @@
+/* @synthwerk/ui-vue: component styles. Import after "@synthwerk/tokens/tokens.css". */
+/* Rules: components read tokens only. No colour or size literal outside this first block. */
+/* Dark and light come from the tokens: set data-mode on <html>, nothing here changes. */
+
+/* 0. Foundations that @synthwerk/tokens does not ship yet. Tailwind 4 owns spacing (Figma size/space-*). */
+:root {
+  --sw-space: var(--spacing, 0.25rem);
+  --sw-hairline: 1px;
+  --sw-tracking-label: 0.15em;
+  --sw-disabled-opacity: 0.4;
+}
+
+/* 1. Shared states */
+.sw-button,
+.sw-pill,
+.sw-status-pill,
+.sw-input,
+.sw-card,
+.sw-divider,
+.sw-terminal,
+.sw-terminal__copy {
+  box-sizing: border-box;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--motion-ease-standard);
+}
+.sw-button:focus-visible,
+.sw-pill:focus-visible,
+.sw-status-pill:focus-visible,
+.sw-input:focus-visible,
+.sw-card:focus-visible,
+.sw-divider:focus-visible,
+.sw-terminal:focus-visible,
+.sw-terminal__copy:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+.sw-is-disabled,
+.sw-button:disabled,
+.sw-input:disabled,
+.sw-terminal__copy:disabled {
+  opacity: var(--sw-disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* 2. Button: pill. Primary = accent fill, secondary = border-control, ghost = text only. */
+.sw-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--sw-space) * 2);
+  padding: calc(var(--sw-space) * 3) calc(var(--sw-space) * 5.5);
+  border: var(--sw-hairline) solid var(--btn-secondary-bg);
+  border-radius: var(--radius-pill);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: var(--text-sm-line-height);
+  cursor: pointer;
+  transition-property: background-color, border-color, box-shadow, color;
+}
+.sw-button--sm {
+  padding: calc(var(--sw-space) * 2) calc(var(--sw-space) * 4);
+}
+.sw-button--primary {
+  border-color: var(--btn-primary-bg);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+.sw-button--primary:hover:enabled {
+  box-shadow: var(--glow);
+}
+.sw-button--secondary {
+  border-color: var(--btn-secondary-border);
+}
+.sw-button--ghost {
+  color: var(--fg-muted);
+}
+.sw-button--secondary:hover:enabled,
+.sw-button--ghost:hover:enabled {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+/* 3. Pill (Figma: Badge). Neutral, accent (accent-2 tint) and solid.
+   The tint is 5 %, not 14 % as in Figma: 14 % fails 4.5:1 for vlm and rig in light mode. */
+.sw-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--sw-space) * 1.5);
+  padding: calc(var(--sw-space) * 1) calc(var(--sw-space) * 2.5);
+  border: var(--sw-hairline) solid var(--border-control);
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs-line-height);
+  letter-spacing: var(--sw-tracking-label);
+  text-transform: uppercase;
+}
+button.sw-pill {
+  cursor: pointer;
+}
+.sw-pill--accent {
+  border-color: color-mix(in srgb, var(--accent-2) 50%, transparent);
+  background: color-mix(in srgb, var(--accent-2) 5%, transparent);
+  color: var(--accent-2-text);
+}
+.sw-pill--solid {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* 4. Status pill. Dot, 40 % border, 5 % fill of the status colour. Emerald = live only.
+   The fill is 5 %, not 10 % as in Figma: 10 % fails 4.5:1 for building and planned in light mode. */
+.sw-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--sw-space) * 2);
+  padding: calc(var(--sw-space) * 1.25) calc(var(--sw-space) * 3);
+  border: var(--sw-hairline) solid color-mix(in srgb, var(--sw-status) 40%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--sw-status) 5%, transparent);
+  color: var(--sw-status);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs-line-height);
+  letter-spacing: var(--sw-tracking-label);
+  text-transform: uppercase;
+}
+.sw-status-pill::before {
+  content: "";
+  inline-size: calc(var(--sw-space) * 1.75);
+  block-size: calc(var(--sw-space) * 1.75);
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+.sw-status-pill--live {
+  --sw-status: var(--success);
+}
+.sw-status-pill--building {
+  --sw-status: var(--warning);
+}
+.sw-status-pill--planned {
+  --sw-status: var(--fg-subtle);
+}
+.sw-status-pill--blocked {
+  --sw-status: var(--danger);
+}
+
+/* 5. Input. input-bg, input-border, ring on focus, danger when invalid. */
+.sw-input {
+  display: block;
+  inline-size: 100%;
+  padding: calc(var(--sw-space) * 3) calc(var(--sw-space) * 3.5);
+  border: var(--sw-hairline) solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--text-base-line-height);
+  transition-property: border-color;
+}
+.sw-input::placeholder {
+  color: var(--fg-subtle);
+  opacity: 1;
+}
+.sw-input:focus-visible {
+  border-color: var(--input-border-focus);
+}
+.sw-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.sw-input:disabled {
+  background: var(--surface-2);
+}
+
+/* 6. Card. card-bg, card-border, card-radius, card-shadow (none in dark). */
+.sw-card {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--sw-space) * 3);
+  padding: calc(var(--sw-space) * 6);
+  border: var(--sw-hairline) solid var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  color: var(--fg);
+  text-decoration: none;
+  transition-property: border-color;
+}
+a.sw-card:hover {
+  border-color: var(--border-control);
+}
+.sw-card__eyebrow {
+  color: var(--accent-2-text);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs-line-height);
+  letter-spacing: var(--sw-tracking-label);
+  text-transform: uppercase;
+}
+.sw-card__title {
+  margin: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: var(--text-2xl-line-height);
+}
+.sw-card__body {
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+}
+.sw-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--sw-space) * 3);
+  padding-block-start: calc(var(--sw-space) * 2);
+}
+
+/* 7. Divider. 1 px line in border. Label kind splits a list, vertical kind splits a row. */
+.sw-divider {
+  margin: 0;
+  border: 0;
+  border-block-start: var(--sw-hairline) solid var(--border);
+}
+.sw-divider--label {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--sw-space) * 4);
+  border: 0;
+  color: var(--fg-subtle);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs-line-height);
+  letter-spacing: var(--sw-tracking-label);
+  text-transform: uppercase;
+}
+.sw-divider--label::before,
+.sw-divider--label::after {
+  content: "";
+  flex: 1;
+  border-block-start: var(--sw-hairline) solid var(--border);
+}
+.sw-divider--vertical {
+  align-self: stretch;
+  border: 0;
+  border-inline-start: var(--sw-hairline) solid var(--border);
+}
+
+/* 8. Terminal snippet. Command = "$ command" with copy. Session = window chrome and output. */
+.sw-terminal {
+  border: var(--sw-hairline) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--fg);
+  overflow: hidden;
+}
+.sw-terminal--command {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--sw-space) * 3);
+  padding: calc(var(--sw-space) * 3) calc(var(--sw-space) * 4);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+}
+.sw-terminal__prompt {
+  color: var(--accent-2-text);
+}
+.sw-terminal__command {
+  flex: 1;
+  margin: 0;
+  color: var(--fg);
+  font: inherit;
+}
+.sw-terminal__copy {
+  padding: calc(var(--sw-space) * 1) calc(var(--sw-space) * 2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--fg-muted);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs-line-height);
+  letter-spacing: var(--sw-tracking-label);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sw-terminal__copy:hover:enabled {
+  color: var(--fg);
+}
+.sw-terminal__chrome {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--sw-space) * 2);
+  padding: calc(var(--sw-space) * 3) calc(var(--sw-space) * 4);
+  border-block-end: var(--sw-hairline) solid var(--border);
+}
+.sw-terminal__dot {
+  inline-size: calc(var(--sw-space) * 2.25);
+  block-size: calc(var(--sw-space) * 2.25);
+  border-radius: var(--radius-pill);
+  background: var(--border-control);
+}
+.sw-terminal__title {
+  color: var(--fg-subtle);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+}
+.sw-terminal__output {
+  margin: 0;
+  padding: calc(var(--sw-space) * 4) calc(var(--sw-space) * 5);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+}
+.sw-terminal__line {
+  display: block;
+  color: var(--fg);
+}
+.sw-terminal__line--muted {
+  color: var(--fg-muted);
+}
+.sw-terminal__line--success {
+  color: var(--success);
+}
+.sw-terminal__line--danger {
+  color: var(--danger);
+}

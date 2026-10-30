@@ -1,0 +1,1 @@
+(function(){try{var p=JSON.parse(localStorage.getItem('sw:prefs:v1')||'{}')||{},d=document.documentElement;if(p.theme==='default'||p.theme==='contrast')d.setAttribute('data-theme',p.theme);if(p.mode==='light'||p.mode==='dark'||p.mode==='system')d.setAttribute('data-mode',p.mode)}catch(e){}})()

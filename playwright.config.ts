@@ -1,0 +1,24 @@
+import { defineConfig, devices } from '@playwright/test'
+
+const PORT = 4174
+
+// One browser (CI-E2E-02). The fleet runs this stage on workflow_dispatch only (CI-E2E-01).
+export default defineConfig({
+  testDir: 'tests/e2e',
+  testMatch: '**/*.spec.ts',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [['list'], ['junit', { outputFile: 'e2e-junit.xml' }]] : 'list',
+  use: {
+    baseURL: `http://127.0.0.1:${PORT}`,
+    trace: 'on-first-retry'
+  },
+  webServer: {
+    command: 'pnpm build && node tests/e2e/serve.ts',
+    url: `http://127.0.0.1:${PORT}/`,
+    reuseExistingServer: !process.env.CI,
+    env: { PORT: String(PORT) }
+  },
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
+})

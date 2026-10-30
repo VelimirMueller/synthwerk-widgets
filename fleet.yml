@@ -1,3 +1,12 @@
 # fleet.yml: tier and visibility of this repo (STANDARD.md). Exceptions: docs/rollout.md.
-tier: docs-only
+# Tier library since synthwerk#34: the embed bundle is built and packed, not deployed yet.
+# It moves to deploys when the bundle gets a host (CDN or edge route).
+tier: library
 visibility: public
+exceptions:
+  - rule: WF-FILE-02
+    value: [feature-doc.yml]
+    reason: The feature-doc check (synthwerk D-16) fails a PR that changes widget source without its docs/features page, and the template has no such stage.
+  - rule: GOV-ENV-10
+    value: no release environment
+    reason: The widget bundle is not published to npm or a CDN yet, so no publish identity exists.

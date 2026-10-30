@@ -1,0 +1,53 @@
+{
+  "name": "@synthwerk/tokens",
+  "version": "0.3.0",
+  "description": "Synthwerk design tokens (public look, D-41): CSS custom properties, Tailwind 4 theme, JSON and typed exports",
+  "license": "MIT",
+  "author": "Velimir Mueller",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VelimirMueller/synthwerk-sdk.git",
+    "directory": "packages/tokens"
+  },
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./tokens.css": "./dist/tokens.css",
+    "./tailwind.css": "./dist/tailwind.css",
+    "./tokens.json": "./dist/tokens.json",
+    "./assets/*": "./assets/*"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "tailwindcss": "^4.3.3"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "opentype.js": "2.0.0",
+    "playwright": "1.64.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/build.ts",
+    "fonts": "node scripts/fonts.ts",
+    "demo": "pnpm run build && node scripts/fonts.ts && node scripts/serve.ts",
+    "wordmark": "node scripts/outline-wordmark.ts",
+    "screenshots": "pnpm run build && node scripts/fonts.ts && node scripts/screenshots.ts"
+  }
+}

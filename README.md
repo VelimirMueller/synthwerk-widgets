@@ -19,6 +19,13 @@
 </picture>
 </p>
 
+## Status
+
+- **Decision:** this repo is a placeholder until epic E3 starts. No restore from `legacy-final`, no archive.
+- **Today:** `main` holds the README, brand files and a docs-only CI. There is no widget code.
+- **Next:** the rewrite is tracked in [synthwerk#34](https://github.com/VelimirMueller/synthwerk/issues/34).
+- **Old code:** tag `legacy-final` holds the Nuxt 3 chat page, for history only.
+
 <br>
 
 <p>
@@ -48,7 +55,7 @@
 <p>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="assets/readme/start-v2-light.svg">
-  <img alt="Terminal: $ gh repo clone VelimirMueller/synthwerk-widgets | $ cd synthwerk-widgets | $ ls | LICENSE  README.md | # that is all of it today" src="assets/readme/start-v2-dark.svg" width="100%">
+  <img alt="Terminal: $ gh repo clone VelimirMueller/synthwerk-widgets | $ cd synthwerk-widgets | $ ls | LICENSE  README.md  assets  brand  fleet.yml  vm-brand.json | # README and brand files only. no widget code." src="assets/readme/start-v2-dark.svg" width="100%">
 </picture>
 </p>
 
@@ -58,7 +65,7 @@
 ```bash
 gh repo clone VelimirMueller/synthwerk-widgets
 cd synthwerk-widgets
-ls   # LICENSE and README.md, that is all of it today
+ls   # README and brand files only. No widget code until epic E3 starts.
 ```
 
 </details>
@@ -118,21 +125,21 @@ ls   # LICENSE and README.md, that is all of it today
 <p>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="assets/readme/status-v2-light.svg">
-  <img alt="rewrite: planned in epic E3, chat vertical slice. old code: tag legacy-final: Nuxt 3 chat page, old GPT4All server. chat widget: planned. vision widget: planned. branching: main to dev, tag to stg, approved digest to prd" src="assets/readme/status-v2-dark.svg" width="100%">
+  <img alt="rewrite: placeholder until epic E3 starts. old code: tag legacy-final: Nuxt 3 chat page, old GPT4All server. chat widget: planned. vision widget: planned. branching: main to dev, tag to stg, approved digest to prd" src="assets/readme/status-v2-dark.svg" width="100%">
 </picture>
 </p>
 
 <p>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="assets/readme/statuslog-v2-light.svg">
-  <img alt="[ STATUS ]: Rewrite planned, epic E3. [ WORKS ]: The README. [ NEXT ]: Chat vertical slice" src="assets/readme/statuslog-v2-dark.svg" width="100%">
+  <img alt="[ STATUS ]: Placeholder. Rewrite planned, epic E3. [ WORKS ]: The README. [ NEXT ]: Chat vertical slice" src="assets/readme/statuslog-v2-dark.svg" width="100%">
 </picture>
 </p>
 
 <p>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="assets/readme/honest-v2-light.svg">
-  <img alt="Tests: There is no code and no test command yet. CI later: When the rewrite lands, the blueprint CI runs on every PR. Stack: Vue 3.5 custom elements" src="assets/readme/honest-v2-dark.svg" width="100%">
+  <img alt="Tests: There is no code and no test command yet. CI: A docs-only CI runs on every PR. The full blueprint CI comes with the rewrite. Stack: Vue 3.5 custom elements" src="assets/readme/honest-v2-dark.svg" width="100%">
 </picture>
 </p>
 

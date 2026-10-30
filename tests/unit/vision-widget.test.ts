@@ -247,6 +247,20 @@ describe('<synthwerk-vision>', () => {
     }
   )
 
+  it('identity refuses the trade with 403 origin_not_allowed - not-allowed state, no vision call', async () => {
+    // A real browser can read this answer since identity makes it readable (widgets#41).
+    const api = fakeFetch([
+      routes.token(() => json({ code: 'origin_not_allowed', title: 'Origin not allowed' }, 403)),
+      visionRoutes.classify()
+    ])
+    vi.stubGlobal('fetch', api.fetch)
+    const el = embed()
+    await flush()
+    await choose(el)
+    expect(text(el, '[role=alert] p')).toBe('This site cannot use image labels.')
+    expect(api.calls.some((r) => r.url.includes('/vision/'))).toBe(false)
+  })
+
   it('retry - the same photo again', async () => {
     let first = true
     const api = stubApi(

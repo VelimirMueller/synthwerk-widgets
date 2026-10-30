@@ -209,6 +209,20 @@ describe('<synthwerk-chat>', () => {
     expect(root(el).textContent).not.toContain('Secret answer')
   })
 
+  it('identity refuses the trade with 403 origin_not_allowed - not-allowed state, no llm call', async () => {
+    // A real browser can read this answer since identity makes it readable (widgets#41).
+    const api = fakeFetch([
+      routes.token(() => json({ code: 'origin_not_allowed', title: 'Origin not allowed' }, 403))
+    ])
+    vi.stubGlobal('fetch', api.fetch)
+    const el = embed()
+    el.getUserToken = () => 'user.jwt'
+    await openPanel(el)
+    await sendText(el, 'Hi')
+    expect($(el, '.sw-banner--not_allowed')?.textContent).toBe('This site cannot use the chat.')
+    expect(api.calls.some((r) => r.url.includes('/llm/'))).toBe(false)
+  })
+
   it('user switch mid-session - new chat, new widget token, new conversation', async () => {
     const api = fakeFetch([
       routes.token((r) =>

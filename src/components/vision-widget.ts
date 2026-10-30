@@ -99,7 +99,7 @@ export const VisionWidget = defineComponent(
         active: () => true,
         onStart: (session) => {
           vision.value = createVision({
-            api: createVisionApi(session.sw, config.value.apiUrl),
+            api: createVisionApi(session.sw),
             save: () => config.value.savePhotos
           })
         },

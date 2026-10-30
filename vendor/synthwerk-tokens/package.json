@@ -9,6 +9,10 @@
     "url": "git+https://github.com/VelimirMueller/synthwerk-sdk.git",
     "directory": "packages/tokens"
   },
+  "homepage": "https://github.com/VelimirMueller/synthwerk-sdk/tree/main/packages/tokens#readme",
+  "bugs": {
+    "url": "https://github.com/VelimirMueller/synthwerk-sdk/issues"
+  },
   "type": "module",
   "sideEffects": [
     "*.css"

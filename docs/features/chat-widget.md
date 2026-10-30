@@ -28,7 +28,7 @@ updated: 2026-10-30
 - Desktop: a round launcher at the page edge and a panel above it. Below 640 px: a full-screen sheet.
 - Colours, type and radii come from `@synthwerk/tokens` (service `widgets`). Theme and accent group come from the settings.
 - The host hands in the user token with `getUserToken`. No hook or no token: sign-in view, no token or AI request.
-- The widget trades the user token for a widget token: `POST /identity/v1/apps/{appId}/widget-tokens` (identity#14).
+- The widget trades the user token for a widget token: `POST /identity/v1/apps/{appId}/widget-tokens` (identity#14). The SDK call `requestWidgetToken` sends it.
 - The llm service gets only the widget token. It is bound to the page origin and lives 15 minutes or less.
 - The widget token stays in memory and is reused until 30 s before it expires. Parallel calls share one trade.
 - The first message creates a conversation. It stays in memory for the life of the element.
@@ -179,3 +179,4 @@ updated: 2026-10-30
 | 2026-10-29 | First version (synthwerk#34). |
 | 2026-10-30 | Studio settings (widgets#34). Versioned URL scheme and SRI in CI (widgets#32). Version 0.2.0. |
 | 2026-10-30 | The element base (`src/widget-element.ts`) and the sign-in state (`src/components/use-session.ts`) are shared with `<synthwerk-vision>`. No change for hosts. A 413, 415, 503 or 507 answer without a problem body maps to a code from its status (synthwerk#43). |
+| 2026-10-30 | The widget-token trade goes through the SDK `requestWidgetToken` (synthwerk-sdk#18). Same request, same session rules. No change for hosts. |

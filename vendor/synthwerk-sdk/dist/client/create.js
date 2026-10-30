@@ -3,9 +3,7 @@ import { createTokenAuth } from "../auth/token.js";
 import { chat } from "../llm/chat.js";
 import { visionBody } from "../vision/body.js";
 import { createTransport } from "./transport.js";
-function trimSlash(url) {
-    return url.replace(/\/+$/, '');
-}
+import { trimSlash } from "./url.js";
 export function createSynthwerk(options) {
     if (options.auth.mode !== 'token') {
         throw new TypeError(`@synthwerk/sdk: auth mode "${String(options.auth.mode)}" is not supported`);

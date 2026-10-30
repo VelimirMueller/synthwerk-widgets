@@ -3,6 +3,7 @@
 // It does not use the SDK transport: that transport sends the widget token, and this call
 // needs the user token. The caller keeps the tokens; the SDK stores neither.
 import { clientError, fromFetchFailure } from "../client/errors.js";
+import { trimSlash } from "../client/url.js";
 /** Identity never issues a widget token for longer than 15 minutes. */
 const MAX_EXPIRES_IN_S = 900;
 const MAX_TOKEN_LENGTH = 4096;
@@ -26,7 +27,7 @@ function readGrant(body) {
  */
 export async function requestWidgetToken(options) {
     const send = options.fetch ?? ((input) => globalThis.fetch(input));
-    const base = options.identityUrl.replace(/\/+$/, '');
+    const base = trimSlash(options.identityUrl);
     const url = `${base}/v1/apps/${encodeURIComponent(options.appId)}/widget-tokens`;
     const request = new Request(url, {
         method: 'POST',

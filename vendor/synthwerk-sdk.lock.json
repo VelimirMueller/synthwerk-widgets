@@ -1,7 +1,7 @@
 {
   "source": {
     "repository": "https://github.com/VelimirMueller/synthwerk-sdk.git",
-    "commit": "0a86300ca3e3537b219d3a29e5e12009022c59e5"
+    "commit": "a29c2c9c808f27018c3512bff7ddad255075a891"
   },
   "packages": [
     {
@@ -19,11 +19,13 @@
         "dist/auth/types.d.ts": "634e9d6dc7fdb19aa7707bd94e04f3456076e19fb1fc8cde395ba7ce94fe0000",
         "dist/auth/types.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "dist/client/create.d.ts": "eb9f77e90d78427a08e38456922c34f9f0cb30342ce07677fe4e267b819c2948",
-        "dist/client/create.js": "8648a97acfee4188d206ba1afd19bec8588ff095cb56c4ef987870f4c4f4a09a",
+        "dist/client/create.js": "11a97fda26a98d58b1df7887540aa5b93cf59844977339f4cd54451649fa1dd2",
         "dist/client/errors.d.ts": "d4476483f55adacc890d88d1d3e78d0b442ca495e85c6aa4a68de93a82b7bf1e",
         "dist/client/errors.js": "11d43a39ce80f62e67a7c6e5308e9940d445b8260d9d1c6474273e0a0bde55c5",
         "dist/client/transport.d.ts": "50d34be0c19fbac20f8a57fed4c72d1591663c5aa76292d6650db403ab3e3bc3",
         "dist/client/transport.js": "79fed36832129b6e9f112bcb9678f74124dc958e4b7027dfe8bbdfb5896fc183",
+        "dist/client/url.d.ts": "a09dc27876332bedc804d623d826aae6df3c6d92a3b674921ee9a421f3e13972",
+        "dist/client/url.js": "836f4e7b84e117a6bef505d97fc11126e9bde1cf2f36112978e232b47fc9bed6",
         "dist/generated/identity.d.ts": "e1961369b0d86c84586b3cee162d4521f2aa448596dfdf3c1c60a8a87b61bca6",
         "dist/generated/identity.js": "00f61627f5654e27d547af4c2e102b27bd6025db6a2dbc6ffbd6e3b7ef8a8870",
         "dist/generated/llm.d.ts": "f9060cb2d427fa8a75c0ae2b2780fce89303e21bab5b3c4530fb55e61d529205",
@@ -31,7 +33,7 @@
         "dist/generated/vision.d.ts": "2aa7621d96a500175b86e7c7e773ae169d878b60f8cf5aa4d3ff94da42e90f94",
         "dist/generated/vision.js": "6a9d79a45ee5ad257d35bab617fb87b3bc23b2bba44c44af22158dd3dcad155e",
         "dist/identity/widget-token.d.ts": "0c023472837974af6d6e8509272531685b77bae278a3cfc412f2ca9e75c76fc8",
-        "dist/identity/widget-token.js": "24ffa5fb0d3077b27e798887437e93395eb95fe0e88d60b66dbf557b1ee77681",
+        "dist/identity/widget-token.js": "5cfe25ee61b72a14cc3f5602575bcee8ae0a6e0c00261b55e9195d35a9425f40",
         "dist/index.d.ts": "7ab93f0bae86617f1ae1bdf96e5ef630d80f9427845d3dd01516046f5d79dd0d",
         "dist/index.js": "7c34a1ffc32f3c7f3941f22963b4823ecb26b75fc02f50ee9c862f6d8898197c",
         "dist/llm/chat.d.ts": "50769c2dfb9f8c6ad84b9a900e7a755b14df78e401f29ddb46caa6f23ee44814",

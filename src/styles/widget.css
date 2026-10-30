@@ -50,8 +50,19 @@
   width: var(--sw-launcher-size);
   height: var(--sw-launcher-size);
   border-radius: var(--radius-pill);
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-fg);
+  /* The accent group of the app (data-group, studio setting or attribute). */
+  background: var(--accent-2, var(--btn-primary-bg));
+  color: var(--accent-2-fg, var(--btn-primary-fg));
+}
+
+/* Until the studio settings are in (or failed), the launcher keeps its place but is not shown. */
+.sw-root:not([data-ready]) .sw-launcher {
+  visibility: hidden;
+}
+
+/* A studio greeting keeps its line breaks. It is a text node, never HTML. */
+.sw-msg--greeting {
+  white-space: pre-line;
 }
 
 .sw-root[data-position="bottom-left"] .sw-launcher {

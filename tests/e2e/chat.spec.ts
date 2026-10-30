@@ -15,8 +15,26 @@ interface Seen {
   problems: string[]
 }
 
-async function watch(page: Page): Promise<Seen> {
+const DEFAULTS = {
+  position: 'bottom-right',
+  theme: 'default',
+  mode: 'system',
+  lang: 'auto',
+  accent: 'flagship',
+  greeting: ''
+}
+
+/** The public settings of identity. Every test page loads them first, without a token. */
+async function watch(page: Page, settings: Record<string, string> = DEFAULTS): Promise<Seen> {
   const seen: Seen = { api: [], problems: [] }
+  await page.route('**/api/identity/v1/apps/*/widget-settings', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'cache-control': 'no-cache', vary: 'Origin' },
+      body: JSON.stringify(settings)
+    })
+  )
   page.on('request', (r) => {
     const path = new URL(r.url()).pathname
     if (path.startsWith('/api/')) seen.api.push(`${r.method()} ${path}`)
@@ -76,6 +94,7 @@ test('signed-in user - chats and sees the streamed answer', async ({ page }) => 
   await expect(answer).toContainText('Hello from Synthwerk')
   await expect(answer.locator('strong')).toHaveText('Synthwerk')
   expect(seen.api).toEqual([
+    'GET /api/identity/v1/apps/0192f0a0-0000-7000-8000-000000000001/widget-settings',
     'POST /api/identity/v1/apps/0192f0a0-0000-7000-8000-000000000001/widget-tokens',
     'POST /api/llm/v1/conversations',
     'POST /api/llm/v1/conversations/0192f0a0-0000-7000-8000-0000000000c1/messages'
@@ -83,14 +102,36 @@ test('signed-in user - chats and sees the streamed answer', async ({ page }) => 
   expect(seen.problems).toEqual([])
 })
 
-test('signed-out visitor - sign-in prompt and no request to identity or llm', async ({ page }) => {
+test('signed-out visitor - sign-in prompt, only the public settings request', async ({ page }) => {
   const seen = await watch(page)
   await page.goto('/')
   await page.getByRole('button', { name: 'Open chat' }).click()
   await expect(page.getByText('Sign in to chat')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
   await expect(page.getByRole('textbox')).toHaveCount(0)
-  expect(seen.api).toEqual([])
+  expect(seen.api).toEqual([
+    'GET /api/identity/v1/apps/0192f0a0-0000-7000-8000-000000000001/widget-settings'
+  ])
+  expect(seen.problems).toEqual([])
+})
+
+test('studio settings - greeting, corner and language of the app', async ({ page }) => {
+  const seen = await watch(page, {
+    position: 'bottom-left',
+    theme: 'contrast',
+    mode: 'dark',
+    lang: 'de',
+    accent: 'venture',
+    greeting: 'Moin! <b>Fragen</b> Sie uns.'
+  })
+  await page.goto('/?signed-in')
+  const launcher = page.getByRole('button', { name: 'Chat öffnen' })
+  await expect(launcher).toBeVisible()
+  const box = await launcher.boundingBox()
+  expect(box?.x).toBeLessThan(100)
+  await launcher.click()
+  await expect(page.locator('.sw-msg--greeting')).toHaveText('Moin! <b>Fragen</b> Sie uns.')
+  await expect(page.locator('.sw-msg--greeting b')).toHaveCount(0)
   expect(seen.problems).toEqual([])
 })
 
@@ -111,6 +152,7 @@ test('raw HTML in the answer - shown as text, never run', async ({ page }) => {
 })
 
 test('quota used up - the quota state shows', async ({ page }) => {
+  await watch(page)
   await fakeBackend(page, {
     status: 429,
     headers: { 'content-type': 'application/problem+json', 'retry-after': '600' },
@@ -131,6 +173,7 @@ test('quota used up - the quota state shows', async ({ page }) => {
 })
 
 test('offline - the offline state shows', async ({ page, context }) => {
+  await watch(page)
   await page.goto('/?signed-in')
   await page.getByRole('button', { name: 'Open chat' }).click()
   await context.setOffline(true)
@@ -140,6 +183,7 @@ test('offline - the offline state shows', async ({ page, context }) => {
 })
 
 test('German - text follows the lang attribute', async ({ page }) => {
+  await watch(page, { ...DEFAULTS, lang: 'en' })
   await page.goto('/?lang=de')
   await page.getByRole('button', { name: 'Chat öffnen' }).click()
   await expect(page.getByText('Zum Chatten anmelden')).toBeVisible()
@@ -147,6 +191,7 @@ test('German - text follows the lang attribute', async ({ page }) => {
 
 test('below 640 px - the panel is a full-screen sheet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 })
+  await watch(page)
   await page.goto('/?signed-in')
   await page.getByRole('button', { name: 'Open chat' }).click()
   const box = await page.getByRole('dialog', { name: 'Chat' }).boundingBox()

@@ -92,8 +92,10 @@ jobs:
     with:
       stack: node
       # The embed bundle is the artifact: build it and pack it, publish nothing (CI-BUILD-04).
+      # sri.ts writes dist/release.json and the SRI hash to the job summary (widgets#32).
       command: >-
         pnpm run build &&
+        node scripts/release/sri.ts &&
         mkdir -p "$RUNNER_TEMP/pack" &&
         pnpm pack --pack-destination "$RUNNER_TEMP/pack"
 

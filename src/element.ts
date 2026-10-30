@@ -1,7 +1,7 @@
 // <synthwerk-chat>: the custom element. It mounts the Vue widget into its shadow root.
 import { type App, createApp, reactive } from 'vue'
 import { ChatWidget, type WidgetHost } from './components/chat-widget.ts'
-import { attributes, readConfig, type WidgetConfig } from './config.ts'
+import { type AttributeConfig, attributes, readAttributes } from './config.ts'
 import type { GetUserToken } from './session.ts'
 import { applyStyles } from './styles.ts'
 
@@ -12,16 +12,17 @@ export const SIGN_IN_EVENT = 'synthwerk-sign-in'
 export class SynthwerkChatElement extends HTMLElement {
   static readonly observedAttributes = attributes
 
-  readonly #config: WidgetConfig
+  readonly #attrs: AttributeConfig
   readonly #host: WidgetHost
   #app: App | null = null
 
   constructor() {
     super()
-    this.#config = reactive(this.#read())
+    this.#attrs = reactive(this.#read())
     this.#host = reactive<WidgetHost>({
       version: 0,
       getUserToken: null,
+      languages: globalThis.navigator?.languages ?? [],
       requestSignIn: () => {
         this.dispatchEvent(new CustomEvent(SIGN_IN_EVENT, { bubbles: true, composed: true }))
       }
@@ -53,7 +54,7 @@ export class SynthwerkChatElement extends HTMLElement {
     applyStyles(root)
     const mount = document.createElement('div')
     root.append(mount)
-    this.#app = createApp(ChatWidget, { config: this.#config, host: this.#host })
+    this.#app = createApp(ChatWidget, { attrs: this.#attrs, host: this.#host })
     this.#app.mount(mount)
   }
 
@@ -64,14 +65,14 @@ export class SynthwerkChatElement extends HTMLElement {
   }
 
   attributeChangedCallback(): void {
-    Object.assign(this.#config, this.#read())
+    Object.assign(this.#attrs, this.#read())
   }
 
-  #read(): WidgetConfig {
-    return readConfig((name) => this.getAttribute(name), {
-      languages: globalThis.navigator?.languages ?? [],
-      base: globalThis.location?.href ?? 'http://localhost/'
-    })
+  #read(): AttributeConfig {
+    return readAttributes(
+      (name) => this.getAttribute(name),
+      globalThis.location?.href ?? 'http://localhost/'
+    )
   }
 
   /** A property set before the element was defined hides the setter: apply it now. */

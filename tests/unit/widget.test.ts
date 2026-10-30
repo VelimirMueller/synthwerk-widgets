@@ -1,5 +1,6 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { define, SIGN_IN_EVENT, SynthwerkChatElement, TAG } from '../../src/element.ts'
+import { clearSettingsCache } from '../../src/settings.ts'
 import {
   API,
   APP_ID,
@@ -9,12 +10,19 @@ import {
   json,
   quotaProblem,
   routes,
-  sse
+  sse,
+  studioSettings
 } from '../support/api.ts'
 
 beforeAll(() => define())
 
+// No real network: a test without its own API gets no settings (the defaults).
+beforeEach(() => {
+  vi.stubGlobal('fetch', fakeFetch([]).fetch)
+})
+
 afterEach(() => {
+  clearSettingsCache()
   document.body.replaceChildren()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
@@ -53,7 +61,12 @@ async function sendText(el: SynthwerkChatElement, text: string): Promise<void> {
 }
 
 function stubApi(message: Parameters<typeof routes.message>[0]) {
-  const api = fakeFetch([routes.token(), routes.conversation(), routes.message(message)])
+  const api = fakeFetch([
+    routes.settings(() => json({ code: 'origin_not_allowed', title: 'x' }, 403)),
+    routes.token(),
+    routes.conversation(),
+    routes.message(message)
+  ])
   vi.stubGlobal('fetch', api.fetch)
   return api
 }
@@ -67,14 +80,17 @@ describe('<synthwerk-chat>', () => {
     expect(root(el).adoptedStyleSheets.length + root(el).querySelectorAll('style').length).toBe(1)
   })
 
-  it('signed-out visitor opens the chat - sign-in view and no request at all', async () => {
+  it('signed-out visitor opens the chat - sign-in view, only the public settings request', async () => {
     const api = stubApi(() => answer('x'))
     const el = embed()
     await openPanel(el)
     expect($(el, '.sw-panel')?.dataset.auth).toBe('signed_out')
     expect($(el, '.sw-signin__title')?.textContent).toBe('Sign in to chat')
     expect($(el, '.sw-composer')).toBeNull()
-    expect(api.calls).toHaveLength(0)
+    expect(api.calls.map((r) => new URL(r.url).pathname)).toEqual([
+      `/identity/v1/apps/${APP_ID}/widget-settings`
+    ])
+    expect(api.calls[0]?.headers.get('authorization')).toBeNull()
   })
 
   it('sign-in button without a sign-in URL - sends the sign-in event to the host', async () => {
@@ -308,6 +324,70 @@ describe('<synthwerk-chat>', () => {
     widget?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await flush()
     expect($(el, '.sw-panel')).toBeNull()
+  })
+
+  it('studio settings - greeting, position, mode, theme, accent and language of the app', async () => {
+    vi.stubGlobal('fetch', fakeFetch([routes.settings()]).fetch)
+    const el = embed()
+    const widget = $(el, '.sw-root')
+    expect(widget?.dataset.ready).toBeUndefined()
+    await flush()
+    expect(widget?.dataset.ready).toBe('true')
+    expect(widget?.dataset.position).toBe('bottom-left')
+    expect(widget?.dataset.mode).toBe('dark')
+    expect(widget?.dataset.theme).toBe('contrast')
+    expect(widget?.dataset.group).toBe('venture')
+    expect($(el, '.sw-launcher')?.getAttribute('aria-label')).toBe('Chat öffnen')
+    el.getUserToken = () => 'user.jwt'
+    await openPanel(el)
+    expect($(el, '.sw-msg--greeting')?.textContent).toBe('Moin! Fragen Sie uns.')
+  })
+
+  it('attributes set - the attribute wins over the studio value', async () => {
+    vi.stubGlobal('fetch', fakeFetch([routes.settings()]).fetch)
+    const el = embed({ position: 'bottom-right', mode: 'light', lang: 'en', accent: 'lab' })
+    await flush()
+    const widget = $(el, '.sw-root')
+    expect(widget?.dataset.position).toBe('bottom-right')
+    expect(widget?.dataset.mode).toBe('light')
+    expect(widget?.dataset.group).toBe('lab')
+    expect(widget?.dataset.theme).toBe('contrast')
+    expect($(el, '.sw-launcher')?.getAttribute('aria-label')).toBe('Open chat')
+  })
+
+  it('greeting with HTML - shown as text, no element made', async () => {
+    const greeting = '<img src=x onerror="alert(1)"> Hi'
+    vi.stubGlobal(
+      'fetch',
+      fakeFetch([routes.settings(() => json({ ...studioSettings, greeting }))]).fetch
+    )
+    const el = embed({ lang: 'en' })
+    el.getUserToken = () => 'user.jwt'
+    await flush()
+    await openPanel(el)
+    const item = $(el, '.sw-msg--greeting')
+    expect(item?.textContent).toBe(greeting)
+    expect(item?.querySelector('img')).toBeNull()
+  })
+
+  it('settings load fails - defaults, the launcher shows, no error', async () => {
+    const api = fakeFetch([routes.settings(() => json({ code: 'internal', title: 'x' }, 500))])
+    vi.stubGlobal('fetch', api.fetch)
+    const el = embed()
+    const other = embed()
+    await flush()
+    for (const widget of [$(el, '.sw-root'), $(other, '.sw-root')]) {
+      expect(widget?.dataset.ready).toBe('true')
+      expect(widget?.dataset.position).toBe('bottom-right')
+      expect(widget?.dataset.theme).toBe('default')
+      expect(widget?.dataset.group).toBe('flagship')
+    }
+    el.getUserToken = () => 'user.jwt'
+    await openPanel(el)
+    expect($(el, '.sw-banner')).toBeNull()
+    expect($(el, '.sw-msg--greeting')?.textContent).toBe('Hello. Ask a question to start.')
+    // Two widgets, one failed request, no retry.
+    expect(api.calls).toHaveLength(1)
   })
 
   it('removed from the page - unmounted', () => {

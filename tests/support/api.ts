@@ -53,6 +53,16 @@ export const quotaProblem = {
   quota: { scope: 'user', unit: 'tokens', limit: 50000, resets_at: '2026-10-30T00:00:00Z' }
 }
 
+/** A full, valid settings answer of identity (contracts WidgetSettings). */
+export const studioSettings = {
+  position: 'bottom-left',
+  theme: 'contrast',
+  mode: 'dark',
+  lang: 'de',
+  accent: 'venture',
+  greeting: 'Moin! Fragen Sie uns.'
+}
+
 export interface Route {
   match: (url: URL, request: Request) => boolean
   reply: (request: Request) => Response | Promise<Response>
@@ -84,6 +94,11 @@ export const routes = {
       )
   ): Route => ({
     match: (url, r) => r.method === 'POST' && url.pathname === '/llm/v1/conversations',
+    reply
+  }),
+  /** Studio widget settings of identity (public, no token). */
+  settings: (reply: Route['reply'] = () => json(studioSettings)): Route => ({
+    match: (url, r) => r.method === 'GET' && url.pathname.endsWith('/widget-settings'),
     reply
   }),
   message: (reply: Route['reply']): Route => ({

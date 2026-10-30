@@ -1,6 +1,6 @@
 {
   "name": "synthwerk-widgets",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Synthwerk embeddable chat widget: one script tag, one custom element",
   "license": "MIT",

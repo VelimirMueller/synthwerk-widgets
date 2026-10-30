@@ -14,17 +14,20 @@ import {
   watch
 } from 'vue'
 import { type Chat, type ChatMessage, createChat } from '../chat.ts'
-import type { WidgetConfig } from '../config.ts'
+import { type AttributeConfig, resolveConfig, type WidgetConfig } from '../config.ts'
 import type { WidgetError } from '../errors.ts'
 import { formatTime, type Messages, messagesFor } from '../i18n.ts'
 import { renderMarkdown } from '../markdown.ts'
 import { createSession, type GetUserToken, userToken, type WidgetSession } from '../session.ts'
+import { loadSettings, type StudioSettings } from '../settings.ts'
 import { chatIcon, closeIcon } from './icons.ts'
 
 /** What the element hands to the widget. `version` changes when the host session may have changed. */
 export interface WidgetHost {
   version: number
   getUserToken: GetUserToken | null
+  /** Browser languages, best first (`navigator.languages`). */
+  languages: readonly string[]
   requestSignIn: () => void
   fetch?: (input: Request) => Promise<Response>
 }
@@ -51,17 +54,36 @@ function errorText(t: Messages, error: WidgetError, lang: WidgetConfig['lang']):
 }
 
 export const ChatWidget = defineComponent(
-  (props: { config: WidgetConfig; host: WidgetHost }) => {
+  (props: { attrs: AttributeConfig; host: WidgetHost }) => {
     const open = ref(false)
+    /** Studio settings of the app. `null` until the load ends (success or not). */
+    const studio = shallowRef<StudioSettings | null>(null)
+    const config = computed<WidgetConfig>(() =>
+      resolveConfig(props.attrs, studio.value, props.host.languages)
+    )
     const auth = ref<AuthState>('unknown')
     const online = ref(globalThis.navigator?.onLine !== false)
     const draft = ref('')
     const session = shallowRef<WidgetSession | null>(null)
     const chat = shallowRef<Chat | null>(null)
     const panel = ref<HTMLElement | null>(null)
-    const t = computed(() => messagesFor(props.config.lang))
-    const configured = computed(() => props.config.appId !== '' && props.config.apiUrl !== '')
+    const t = computed(() => messagesFor(config.value.lang))
+    const configured = computed(() => config.value.appId !== '' && config.value.apiUrl !== '')
     let check = 0
+    let load = 0
+
+    /** Loads the studio settings once per app. Until then the launcher stays hidden. */
+    async function loadStudio(): Promise<void> {
+      const run = ++load
+      studio.value = null
+      const { appId, apiUrl } = props.attrs
+      const settings = await loadSettings({
+        appId,
+        apiUrl,
+        ...(props.host.fetch ? { fetch: props.host.fetch } : {})
+      })
+      if (run === load) studio.value = settings
+    }
 
     /** Ends the chat, the session and its cached widget token. The next sign-in builds new ones. */
     function dropChat(): void {
@@ -86,8 +108,8 @@ export const ChatWidget = defineComponent(
       auth.value = 'signed_in'
       if (!chat.value) {
         const created = createSession({
-          appId: props.config.appId,
-          apiUrl: props.config.apiUrl,
+          appId: config.value.appId,
+          apiUrl: config.value.apiUrl,
           getUserToken: () => props.host.getUserToken?.() ?? null,
           ...(props.host.fetch ? { fetch: props.host.fetch } : {})
         })
@@ -141,6 +163,7 @@ export const ChatWidget = defineComponent(
     const setOffline = () => {
       online.value = false
     }
+    void loadStudio()
     onMounted(() => {
       globalThis.addEventListener?.('online', setOnline)
       globalThis.addEventListener?.('offline', setOffline)
@@ -152,8 +175,9 @@ export const ChatWidget = defineComponent(
     })
 
     watch(
-      () => [props.config.appId, props.config.apiUrl],
+      () => [props.attrs.appId, props.attrs.apiUrl],
       () => {
+        void loadStudio()
         dropChat()
         auth.value = 'unknown'
         if (open.value) void checkSession()
@@ -191,10 +215,10 @@ export const ChatWidget = defineComponent(
     }
 
     function renderSignIn(text: Messages): VNode {
-      const action = props.config.signInUrl
+      const action = config.value.signInUrl
         ? h(
             'a',
-            { class: 'sw-button sw-button--primary sw-button--md', href: props.config.signInUrl },
+            { class: 'sw-button sw-button--primary sw-button--md', href: config.value.signInUrl },
             text.signIn
           )
         : h(
@@ -216,7 +240,7 @@ export const ChatWidget = defineComponent(
       }
       if (!error) return null
       return h('div', { class: ['sw-banner', `sw-banner--${error.kind}`], role: 'alert' }, [
-        h('p', errorText(text, error, props.config.lang)),
+        h('p', errorText(text, error, config.value.lang)),
         error.kind === 'quota' || error.kind === 'not_allowed'
           ? null
           : h(
@@ -237,7 +261,14 @@ export const ChatWidget = defineComponent(
           'ol',
           { class: 'sw-messages', role: 'log', 'aria-busy': streaming ? 'true' : 'false' },
           messages.length === 0
-            ? [h('li', { class: 'sw-msg sw-msg--assistant sw-msg--greeting' }, text.greeting)]
+            ? [
+                // A text node: the studio greeting is plain text, never HTML.
+                h(
+                  'li',
+                  { class: 'sw-msg sw-msg--assistant sw-msg--greeting' },
+                  config.value.greeting ?? text.greeting
+                )
+              ]
             : messages.map((m) => renderMessage(m, text))
         ),
         renderBanner(text),
@@ -279,16 +310,19 @@ export const ChatWidget = defineComponent(
 
     return () => {
       const text = t.value
-      const { config } = props
+      const current = config.value
       return h(
         'div',
         {
           class: ['sw-root', { 'sw-root--open': open.value }],
-          'data-theme': 'default',
+          'data-theme': current.theme,
+          'data-group': current.accent,
           'data-service': 'widgets',
-          'data-mode': config.mode === 'system' ? undefined : config.mode,
-          'data-position': config.position,
-          lang: config.lang,
+          'data-mode': current.mode === 'system' ? undefined : current.mode,
+          'data-position': current.position,
+          // Hidden launcher until the studio settings are in: no jump to another corner.
+          'data-ready': studio.value || !configured.value ? 'true' : undefined,
+          lang: current.lang,
           onKeydown
         },
         [
@@ -338,7 +372,7 @@ export const ChatWidget = defineComponent(
   {
     name: 'ChatWidget',
     props: {
-      config: { type: Object as PropType<WidgetConfig>, required: true },
+      attrs: { type: Object as PropType<AttributeConfig>, required: true },
       host: { type: Object as PropType<WidgetHost>, required: true }
     }
   }

@@ -1,12 +1,12 @@
 {
   "group": "flagship",
   "tagline": "Embeds AI. Keeps its distance.",
-  "sublabel": "WIDGETS · CHAT · VISION · IFRAME",
+  "sublabel": "WIDGETS · CHAT · VISION · CUSTOM ELEMENT",
   "bannerVersion": "v2",
   "art": {
     "file": "v2/synthwerk-widgets.png",
     "seed": 316
   },
-  "status": "REWRITE",
+  "status": "BETA",
   "readme": "v3"
 }

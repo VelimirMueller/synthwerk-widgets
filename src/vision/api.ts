@@ -166,10 +166,14 @@ function form(body: { image: Blob }): FormData {
 /**
  * The vision calls through the SDK transport: the widget token, one new token after a 401,
  * and the offline and network errors. The SDK has no vision client yet, so the calls go
- * through its identity client with the vision base URL per request: openapi-fetch reads a
- * per-request `baseUrl` (0.17.0, `localBaseUrl` in `createClient`). Edge route:
- * `<apiUrl>/vision`, the same pattern as `/identity` and `/llm`. tests/unit/vision-api.test.ts
- * asserts the request URL, so a change in openapi-fetch fails a test, not a user.
+ * through its identity client with the vision base URL per request.
+ * - `baseUrl` is a typed per-request option of openapi-fetch 0.17.0 (`RequestOptions.baseUrl`
+ *   in its `index.d.ts`; `localBaseUrl` in `createClient`), so the option is type-checked.
+ * - The cast changes only the paths type (identity → vision). The transport stays the SDK's.
+ * - tests/unit/vision-api.test.ts and tests/e2e/vision.spec.ts assert the request URL
+ *   `<apiUrl>/vision/v1/...`: a change in openapi-fetch fails a test, not a user.
+ * - Edge route `<apiUrl>/vision`, the same pattern as `/identity` and `/llm`.
+ * - Goes away with the SDK vision client (synthwerk-sdk#19).
  */
 export function createVisionApi(sw: Pick<Synthwerk, 'api'>, apiUrl: string): VisionApi {
   const client = sw.api.identity as unknown as Client<VisionPaths>

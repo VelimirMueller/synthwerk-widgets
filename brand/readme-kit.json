@@ -2,49 +2,155 @@
   "group": "flagship",
   "version": "v2",
   "dividers": [
-    {"key": "what",   "index": "01", "title": "WHAT IT DOES", "caption": "A BUTTON. IT KNOWS ITS PLACE.",   "art": "strip-flagship-1"},
-    {"key": "start",  "index": "02", "title": "QUICK START",  "caption": "NOTHING TO RUN. YET.",            "art": "strip-flagship-2"},
-    {"key": "how",    "index": "03", "title": "HOW IT WORKS", "caption": "BOXES AND ARROWS, AS PLANNED.",   "art": "strip-flagship-3"},
-    {"key": "usage",  "index": "04", "title": "USAGE",        "caption": "FACTS FROM THE OLD README. KEPT.", "art": "strip-flagship-4"},
-    {"key": "status", "index": "05", "title": "STATUS",       "caption": "TRUE THINGS. IN SMALL BOXES.",    "art": "strip-flagship-5"}
+    {
+      "key": "what",
+      "index": "01",
+      "title": "WHAT IT DOES",
+      "caption": "A BUTTON. IT KNOWS ITS PLACE.",
+      "art": "strip-flagship-1"
+    },
+    {
+      "key": "start",
+      "index": "02",
+      "title": "QUICK START",
+      "caption": "ONE SCRIPT TAG. ONE ELEMENT.",
+      "art": "strip-flagship-2"
+    },
+    {
+      "key": "how",
+      "index": "03",
+      "title": "HOW IT WORKS",
+      "caption": "BOXES AND ARROWS. NOW BUILT.",
+      "art": "strip-flagship-3"
+    },
+    {
+      "key": "usage",
+      "index": "04",
+      "title": "USAGE",
+      "caption": "FACTS. SOME OLD, SOME NEW.",
+      "art": "strip-flagship-4"
+    },
+    {
+      "key": "status",
+      "index": "05",
+      "title": "STATUS",
+      "caption": "TRUE THINGS. IN SMALL BOXES.",
+      "art": "strip-flagship-5"
+    }
   ],
   "panels": [
-    {"key": "stats", "type": "stats", "title": "SYNTHWERK-WIDGETS IN NUMBERS", "items": [
-      {"value": "2", "label": "WIDGETS PLANNED, CHAT AND VISION"},
-      {"value": "3", "label": "SERVICES BEHIND THEM"},
-      {"value": "1", "label": "ISOLATED IFRAME PER PAGE"},
-      {"value": "0", "label": "LINES OF CODE ON MAIN"}
-    ]},
-    {"key": "features", "type": "cards", "title": "WHAT LANDS ON YOUR PAGE", "items": [
-      {"title": "ANY PAGE", "text": "A small loader element puts a launcher on any page. The widget app runs in an isolated iframe."},
-      {"title": "DESKTOP AND MOBILE", "text": "Floating button on desktop, bottom sheet on mobile. Position, theme and language come from studio settings."},
-      {"title": "SIGN-IN FIRST", "text": "Signed-in users only. Logged-out visitors see a sign-in prompt."}
-    ]},
-    {"key": "start", "type": "terminal", "title": "QUICK START", "lines": [
-      "$ gh repo clone VelimirMueller/synthwerk-widgets",
-      "$ cd synthwerk-widgets",
-      "$ ls",
-      "LICENSE  README.md  assets  brand  fleet.yml  vm-brand.json",
-      "# README and brand files only. no widget code."
-    ]},
-    {"key": "flow", "type": "flow", "title": "ONE PAGE, LEFT TO RIGHT", "nodes": [
-      {"title": "PAGE", "sub": "any website or app"},
-      {"title": "LOADER", "sub": "small element"},
-      {"title": "IFRAME", "sub": "chat, vision", "hot": true},
-      {"title": "SERVICES", "sub": "llm, vision, identity"}
-    ], "caption": "The iframe isolates the widget from the host page. On purpose."},
-    {"key": "status", "type": "status", "title": "WHAT EXISTS TODAY", "rows": [
-      {"label": "rewrite", "value": "placeholder until epic E3 starts", "state": "planned"},
-      {"label": "old code", "value": "tag legacy-final: Nuxt 3 chat page, old GPT4All server", "state": "ok"},
-      {"label": "chat widget", "value": "planned", "state": "planned"},
-      {"label": "vision widget", "value": "planned", "state": "planned"},
-      {"label": "branching", "value": "main to dev, tag to stg, approved digest to prd", "state": "ok"}
-    ]},
+    {
+      "key": "stats",
+      "type": "stats",
+      "title": "SYNTHWERK-WIDGETS IN NUMBERS",
+      "items": [
+        {
+          "value": "1",
+          "label": "CHAT WIDGET SHIPPED"
+        },
+        {
+          "value": "1",
+          "label": "VISION WIDGET PLANNED"
+        },
+        {
+          "value": "1",
+          "label": "SCRIPT TAG PER PAGE"
+        },
+        {
+          "value": "0",
+          "label": "COOKIES OR STORAGE WRITES"
+        }
+      ]
+    },
+    {
+      "key": "features",
+      "type": "cards",
+      "title": "WHAT LANDS ON YOUR PAGE",
+      "items": [
+        {
+          "title": "ANY PAGE",
+          "text": "One script tag and one <synthwerk-chat> element put a chat launcher on any page."
+        },
+        {
+          "title": "DESKTOP AND MOBILE",
+          "text": "Round launcher and panel on desktop. A full-screen sheet below 640 px."
+        },
+        {
+          "title": "SIGN-IN FIRST",
+          "text": "Signed-in users chat. Signed-out visitors see a sign-in prompt and send no request."
+        }
+      ]
+    },
+    {
+      "key": "start",
+      "type": "terminal",
+      "title": "QUICK START",
+      "lines": [
+        "$ gh repo clone VelimirMueller/synthwerk-widgets",
+        "$ cd synthwerk-widgets && pnpm install",
+        "$ pnpm check",
+        "# lint, typecheck, unit tests, build",
+        "$ pnpm demo",
+        "# test page at http://127.0.0.1:4174/"
+      ]
+    },
+    {
+      "key": "flow",
+      "type": "flow",
+      "title": "ONE PAGE, LEFT TO RIGHT",
+      "nodes": [
+        {
+          "title": "PAGE",
+          "sub": "any website or app"
+        },
+        {
+          "title": "ELEMENT",
+          "sub": "<synthwerk-chat>"
+        },
+        {
+          "title": "SHADOW ROOT",
+          "sub": "chat view",
+          "hot": true
+        },
+        {
+          "title": "SERVICES",
+          "sub": "identity, llm"
+        }
+      ],
+      "caption": "The shadow root keeps host CSS and widget CSS apart. On purpose."
+    },
+    {
+      "key": "status",
+      "type": "status",
+      "title": "WHAT EXISTS TODAY",
+      "rows": [
+        {
+          "label": "chat widget",
+          "value": "shipped (synthwerk#34): <synthwerk-chat>, beta",
+          "state": "ok"
+        },
+        {
+          "label": "vision widget",
+          "value": "planned",
+          "state": "planned"
+        },
+        {
+          "label": "bundle",
+          "value": "dist/synthwerk-chat.js, built in CI, not hosted yet",
+          "state": "wip"
+        },
+        {
+          "label": "old code",
+          "value": "tag legacy-final: Nuxt 3 chat page, old GPT4All server",
+          "state": "ok"
+        }
+      ]
+    },
     {
       "key": "lead",
       "type": "lead",
       "title": "ABOUT",
-      "text": "**synthwerk-widgets** holds the embeddable AI chat and vision widgets for [synthwerk](https://github.com/VelimirMueller/synthwerk). The rewrite is planned. Until then, `main` holds a README. It holds it well."
+      "text": "**synthwerk-widgets** holds the embeddable widgets for [synthwerk](https://github.com/VelimirMueller/synthwerk). The chat widget ships as one custom element. The vision widget comes next."
     },
     {
       "key": "what",
@@ -53,20 +159,20 @@
       "columns": 2,
       "items": [
         {
-          "lead": "One loader element",
-          "text": "One loader element puts a launcher on the page. The widget app runs in an isolated iframe."
+          "lead": "One custom element",
+          "text": "`<synthwerk-chat>` renders into an open shadow root. Host CSS and widget CSS do not mix."
         },
         {
           "lead": "Desktop and mobile",
-          "text": "Floating button on desktop, bottom sheet on mobile."
+          "text": "Launcher and panel on desktop, full-screen sheet on small screens."
         },
         {
-          "lead": "Studio settings",
-          "text": "Position, theme and language come from studio settings."
+          "lead": "Streamed answers",
+          "text": "The answer streams in as safe Markdown. Raw HTML stays text."
         },
         {
           "lead": "Signed-in users only",
-          "text": "Logged-out visitors see a sign-in prompt."
+          "text": "Signed-out visitors see a sign-in prompt. The widget then sends no request."
         }
       ]
     },
@@ -76,10 +182,15 @@
       "title": "WHAT YOU GET",
       "items": [
         {
-          "lead": "Nothing to install",
-          "text": "There is nothing to install, build or run yet. This is the honest quick start."
+          "lead": "Embed",
+          "text": "Load `synthwerk-chat.js` as a module, add `<synthwerk-chat app-id api-url>`, hand in the user token with `getUserToken`."
+        },
+        {
+          "lead": "Details",
+          "text": "Attributes, errors and limits: `docs/features/chat-widget.md`."
         }
-      ]
+      ],
+      "columns": 2
     },
     {
       "key": "hownotes",
@@ -88,19 +199,19 @@
       "columns": 2,
       "items": [
         {
-          "lead": "Three services",
-          "text": "The widget calls three services: `synthwerk-llm`, `synthwerk-vision` and `synthwerk-identity`"
+          "lead": "Two services today",
+          "text": "The chat trades the user token for a widget token at `synthwerk-identity`, then streams from `synthwerk-llm`."
         },
         {
           "lead": "The host page",
-          "text": "The host page only meets the loader element. The iframe keeps the rest away from it."
+          "text": "The host page meets one element. The widget token stays in memory and is bound to the page origin."
         }
       ]
     },
     {
       "key": "usage",
       "type": "notes",
-      "title": "FACTS FROM THE OLD README",
+      "title": "FACTS",
       "columns": 2,
       "items": [
         {
@@ -120,8 +231,8 @@
           "text": "Tag `legacy-final` holds a Nuxt 3 chat page for the old GPT4All server."
         },
         {
-          "lead": "Branching",
-          "text": "`main` deploys to dev, a `vX.Y.Z` tag to stg, an approved digest to prd."
+          "lead": "Tier",
+          "text": "Library: the bundle is built and packed in CI, not deployed yet."
         },
         {
           "lead": "License",
@@ -136,15 +247,15 @@
       "rows": [
         {
           "cmd": "[ STATUS ]",
-          "text": "Placeholder. Rewrite planned, epic E3."
+          "text": "Chat widget shipped, beta (synthwerk#34)."
         },
         {
           "cmd": "[ WORKS ]",
-          "text": "The README."
+          "text": "Sign-in prompt, widget token, streamed answers, error and offline states, German and English."
         },
         {
           "cmd": "[ NEXT ]",
-          "text": "Chat vertical slice."
+          "text": "Vision widget. A host for the bundle."
         }
       ]
     },
@@ -156,15 +267,15 @@
       "items": [
         {
           "lead": "Tests",
-          "text": "There is no code and no test command yet."
+          "text": "Vitest unit tests and a Playwright e2e test on a strict CSP page."
         },
         {
           "lead": "CI",
-          "text": "A docs-only CI runs on every PR. The full blueprint CI comes with the rewrite."
+          "text": "Lint, typecheck, unit with coverage, e2e and build on every PR."
         },
         {
           "lead": "Stack",
-          "text": "Vue 3.5 custom elements."
+          "text": "Vue 3.5 custom element, Vite, pnpm."
         }
       ]
     },
@@ -212,7 +323,7 @@
     }
   ],
   "readme": {
-    "hero_alt": "SYNTHWERK-WIDGETS. Embeddable AI chat and vision widgets. Rewrite planned. Widgets, chat, vision, iframe.",
+    "hero_alt": "SYNTHWERK-WIDGETS. Embeddable AI chat and vision widgets. Chat widget shipped. Widgets, chat, vision.",
     "items": [
       "lead",
       "stats",
@@ -227,7 +338,7 @@
         "code": [
           [
             "bash",
-            "gh repo clone VelimirMueller/synthwerk-widgets\ncd synthwerk-widgets\nls   # README and brand files only. No widget code until epic E3 starts."
+            "gh repo clone VelimirMueller/synthwerk-widgets\ncd synthwerk-widgets && pnpm install\npnpm check   # lint, typecheck, unit tests, build\npnpm demo    # test page at http://127.0.0.1:4174/"
           ]
         ]
       },

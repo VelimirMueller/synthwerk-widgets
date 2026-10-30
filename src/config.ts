@@ -71,15 +71,16 @@ export function readAttributes(
   get: (name: (typeof attributes)[number]) => string | null,
   base: string
 ): AttributeConfig {
-  const lang = get('lang')?.trim()
+  const read = (name: (typeof attributes)[number]) => get(name)?.trim() ?? ''
+  const lang = read('lang')
   return {
-    appId: (get('app-id') ?? '').trim(),
-    apiUrl: (get('api-url') ?? '').trim(),
-    lang: lang ? lang : null,
-    mode: oneOf(get('mode'), modes),
-    position: oneOf(get('position'), positions),
-    theme: oneOf(get('theme'), themes),
-    accent: oneOf(get('accent'), accents),
+    appId: read('app-id'),
+    apiUrl: read('api-url'),
+    lang: lang === '' ? null : lang,
+    mode: oneOf(read('mode'), modes),
+    position: oneOf(read('position'), positions),
+    theme: oneOf(read('theme'), themes),
+    accent: oneOf(read('accent'), accents),
     signInUrl: safeSignInUrl(get('sign-in-url'), base)
   }
 }

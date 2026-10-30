@@ -122,6 +122,7 @@ const cache = new Map<string, Promise<StudioSettings>>()
  * The studio settings of an app. One request per API and app for the life of the page,
  * shared by every widget on it. It never throws: a failure gives `NO_SETTINGS`, and the
  * failure is kept too, so a broken API gets no retry storm. A reload asks again.
+ * The first caller's `fetch` and `timeoutMs` serve all later callers of the same app.
  */
 export function loadSettings(options: LoadOptions): Promise<StudioSettings> {
   if (options.appId === '' || options.apiUrl === '') return Promise.resolve(NO_SETTINGS)

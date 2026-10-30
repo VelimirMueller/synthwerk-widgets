@@ -14,7 +14,9 @@ const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8')) as { 
 if (!/^\d+\.\d+\.\d+$/.test(pkg.version))
   throw new Error(`package.json version ${pkg.version} is not X.Y.Z`)
 
-const bundle = await readFile(join(ROOT, 'dist', FILE))
+const bundle = await readFile(join(ROOT, 'dist', FILE)).catch(() => {
+  throw new Error(`dist/${FILE} is missing: run pnpm build first`)
+})
 const integrity = `sha384-${createHash('sha384').update(bundle).digest('base64')}`
 // The URL scheme: one immutable path per version on the widget host (docs/features/chat-widget.md).
 const path = `/widgets/v${pkg.version}/${FILE}`

@@ -163,13 +163,18 @@ describe('resolveConfig', () => {
     })
   })
 
-  it('invalid attribute - the studio value, not the bad value', () => {
+  it('invalid attribute - the studio value, not the bad value; spaces trimmed', () => {
     const config = resolveConfig(
-      attrs({ accent: 'hotpink', lang: 'fr', position: 'middle' }),
+      attrs({ accent: 'hotpink', lang: 'fr', position: 'middle', mode: ' light ' }),
       parseSettings(studioSettings),
       ['en']
     )
-    expect(config).toMatchObject({ accent: 'venture', lang: 'de', position: 'bottom-left' })
+    expect(config).toMatchObject({
+      accent: 'venture',
+      lang: 'de',
+      position: 'bottom-left',
+      mode: 'light'
+    })
   })
 
   it('no studio settings - the defaults and the browser language', () => {

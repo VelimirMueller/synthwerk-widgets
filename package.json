@@ -2,7 +2,7 @@
   "name": "synthwerk-widgets",
   "version": "0.2.0",
   "private": true,
-  "description": "Synthwerk embeddable chat widget: one script tag, one custom element",
+  "description": "Synthwerk embeddable widgets (chat, vision): one script tag, one custom element each",
   "license": "MIT",
   "author": "Velimir Mueller",
   "type": "module",
@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test --project=chromium",
-    "build": "vite build",
+    "build": "vite build && vite build --mode vision",
     "demo": "vite build && node tests/e2e/serve.ts",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
@@ -36,6 +36,7 @@
     "@vitest/coverage-v8": "5.0.3",
     "@vue/test-utils": "2.5.1",
     "happy-dom": "20.14.5",
+    "openapi-fetch": "0.17.0",
     "typescript": "6.0.3",
     "vite": "8.3.5",
     "vitest": "5.0.3"

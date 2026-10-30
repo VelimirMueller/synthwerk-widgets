@@ -16,6 +16,8 @@ describe('classify', () => {
     ['origin_not_allowed', 'not_allowed'],
     ['forbidden', 'not_allowed'],
     ['input_too_large', 'too_long'],
+    ['unsupported_media_type', 'unsupported'],
+    ['storage_full', 'storage_full'],
     ['stream_stalled', 'interrupted'],
     ['stream_interrupted', 'interrupted'],
     ['network', 'generic'],
@@ -52,8 +54,13 @@ describe('problemError', () => {
   it.each([
     [401, 'unauthenticated'],
     [403, 'forbidden'],
+    [413, 'input_too_large'],
+    [415, 'unsupported_media_type'],
     [429, 'rate_limited'],
-    [500, 'bad_gateway']
+    [503, 'model_unavailable'],
+    [507, 'storage_full'],
+    [500, 'bad_gateway'],
+    [422, 'bad_gateway']
   ])('no problem body, status %i - code %s', (status, code) => {
     expect(problemError('<html>proxy</html>', new Response(null, { status })).code).toBe(code)
   })

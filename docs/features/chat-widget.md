@@ -178,3 +178,4 @@ updated: 2026-10-30
 |---|---|
 | 2026-10-29 | First version (synthwerk#34). |
 | 2026-10-30 | Studio settings (widgets#34). Versioned URL scheme and SRI in CI (widgets#32). Version 0.2.0. |
+| 2026-10-30 | The element base (`src/widget-element.ts`) and the sign-in state (`src/components/use-session.ts`) are shared with `<synthwerk-vision>`. No change for hosts. A 413, 415, 503 or 507 answer without a problem body maps to a code from its status (synthwerk#43). |

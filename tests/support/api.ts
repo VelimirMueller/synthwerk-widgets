@@ -106,3 +106,64 @@ export const routes = {
     reply
   })
 }
+
+/** A classification in the shape of synthwerk-vision `ClassificationOut`. */
+export function classification(overrides: Record<string, unknown> = {}) {
+  const label = (id: string, name: string, score: number, path: string[]) => ({
+    id,
+    label: name,
+    score,
+    topic: path[path.length - 2] ?? 'animal',
+    path
+  })
+  return {
+    request_id: 'req-1',
+    image: {
+      sha256: 'ab'.repeat(32),
+      content_type: 'image/jpeg',
+      size_bytes: 12345,
+      width: 640,
+      height: 480
+    },
+    model: { name: 'siglip2', taxonomy_version: 3 },
+    primary: label('n02088364', 'beagle', 0.81, ['animal', 'mammal', 'dog', 'beagle']),
+    topic: { id: 'animal', parent: null, depth: 0, score: 0.97 },
+    labels: [
+      label('n02088364', 'beagle', 0.81, ['animal', 'mammal', 'dog', 'beagle']),
+      label('n02089973', 'English foxhound', 0.09, ['animal', 'mammal', 'dog', 'English foxhound']),
+      label('n02089867', 'Walker hound', 0.05, ['animal', 'mammal', 'dog', 'Walker hound'])
+    ],
+    topics: [{ id: 'animal', parent: null, depth: 0, score: 0.97 }],
+    uncertain: false,
+    correction: null,
+    timings_ms: { inference: 35, total: 40 },
+    ...overrides
+  }
+}
+
+export const storedImage = {
+  id: '0f1e2d3c-4b5a-4978-8f1e-2d3c4b5a6978',
+  content_type: 'image/jpeg',
+  size_bytes: 12345,
+  width: 640,
+  height: 480
+}
+
+/** A FastAPI error body: `{detail}`, no problem `code`. */
+export function detail(status: number, text = 'refused'): Response {
+  return new Response(JSON.stringify({ detail: text }), {
+    status,
+    headers: { 'content-type': 'application/json' }
+  })
+}
+
+export const visionRoutes = {
+  classify: (reply: Route['reply'] = () => json(classification())): Route => ({
+    match: (url, r) => r.method === 'POST' && url.pathname === '/vision/v1/classifications',
+    reply
+  }),
+  store: (reply: Route['reply'] = () => json(storedImage, 201)): Route => ({
+    match: (url, r) => r.method === 'POST' && url.pathname === '/vision/v1/images',
+    reply
+  })
+}

@@ -9,6 +9,8 @@ export type ErrorKind =
   | 'not_allowed'
   | 'too_long'
   | 'interrupted'
+  | 'unsupported'
+  | 'storage_full'
   | 'generic'
 
 export interface WidgetError {
@@ -27,6 +29,8 @@ const KIND_BY_CODE: Record<string, ErrorKind> = {
   origin_not_allowed: 'not_allowed',
   forbidden: 'not_allowed',
   input_too_large: 'too_long',
+  unsupported_media_type: 'unsupported',
+  storage_full: 'storage_full',
   stream_stalled: 'interrupted',
   stream_interrupted: 'interrupted'
 }
@@ -48,6 +52,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 const CODE = /^[a-z][a-z0-9_]{0,63}$/
 
 /**
+ * The code of an answer without a problem body: the edge (Traefik) and the vision service
+ * (FastAPI `{detail}`) answer with a status only. Clients branch on the status, never on `detail`.
+ */
+const CODE_BY_STATUS: Record<number, string> = {
+  401: 'unauthenticated',
+  403: 'forbidden',
+  413: 'input_too_large',
+  415: 'unsupported_media_type',
+  429: 'rate_limited',
+  503: 'model_unavailable',
+  507: 'storage_full'
+}
+
+/**
  * A SynthwerkError from a problem body and its response. The body is never copied into
  * the error: only the stable `code` and a short `title` (no prompt, no token).
  */
@@ -58,13 +76,7 @@ export function problemError(body: unknown, response: Response | undefined): Syn
   const code =
     isRecord(body) && typeof body.code === 'string' && CODE.test(body.code)
       ? body.code
-      : status === 401
-        ? 'unauthenticated'
-        : status === 403
-          ? 'forbidden'
-          : status === 429
-            ? 'rate_limited'
-            : 'bad_gateway'
+      : (status !== null && CODE_BY_STATUS[status]) || 'bad_gateway'
   const title = isRecord(body) && typeof body.title === 'string' ? body.title.slice(0, 128) : code
   return new SynthwerkError({
     code,

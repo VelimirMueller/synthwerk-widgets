@@ -1,73 +1,26 @@
-// The two vision routes the widget calls, typed after synthwerk-vision `schemas.py`
-// (`ClassificationOut`, `ImageOut`). synthwerk-contracts has no spec for them yet, so the
-// types are hand-written here in the openapi-typescript shape. Replace them with the
-// generated ones when the spec and the SDK vision client land.
-import type { Synthwerk } from '@synthwerk/sdk'
-import type { Client } from 'openapi-fetch'
+// The two vision routes the widget calls, through the SDK vision client (`sw.api.vision`).
+// The types come from the SDK, generated from the synthwerk-contracts vision spec. The
+// widget still reads every answer defensively (readClassification) before the view shows it.
+import type {
+  Classification as ClassificationOut,
+  Correction,
+  ScoredLabel,
+  ScoredTopic,
+  Synthwerk,
+  VisionImage
+} from '@synthwerk/sdk'
 import { problemError } from '../errors.ts'
 
-export interface VisionLabel {
-  id: string
-  label: string
-  /** Probability of this exact label, 0 to 1. */
-  score: number
-  topic: string
-  /** Root topic → … → topic → label. */
-  path: string[]
-}
+export type VisionLabel = ScoredLabel
+export type VisionTopic = ScoredTopic
 
-export interface VisionTopic {
-  id: string
-  parent: string | null
-  depth: number
-  score: number
-}
+/** The part of `ClassificationOut` the widget shows. */
+export type Classification = Pick<
+  ClassificationOut,
+  'request_id' | 'primary' | 'topic' | 'labels' | 'topics' | 'uncertain'
+> & { correction: Correction | null }
 
-export interface Classification {
-  request_id: string
-  primary: VisionLabel
-  topic: VisionTopic
-  labels: VisionLabel[]
-  topics: VisionTopic[]
-  uncertain: boolean
-  correction: { feedback_id: number; label: VisionLabel; distance: number } | null
-}
-
-export interface StoredImage {
-  id: string
-  content_type: string
-  size_bytes: number
-  width: number
-  height: number
-}
-
-interface FastApiError {
-  detail: unknown
-}
-
-type NoParams = { query?: never; header?: never; path?: never; cookie?: never }
-type Json<T> = { headers: Record<string, unknown>; content: { 'application/json': T } }
-type Upload = { content: { 'multipart/form-data': { image: Blob } } }
-
-/** The vision paths in the shape openapi-fetch reads. */
-export interface VisionPaths {
-  '/v1/classifications': {
-    parameters: NoParams
-    post: {
-      parameters: NoParams
-      requestBody: Upload
-      responses: { 200: Json<unknown>; default: Json<FastApiError> }
-    }
-  }
-  '/v1/images': {
-    parameters: NoParams
-    post: {
-      parameters: NoParams
-      requestBody: Upload
-      responses: { 201: Json<unknown>; default: Json<FastApiError> }
-    }
-  }
-}
+export type StoredImage = VisionImage
 
 /** Limits for text from the API. The view shows it as text only. */
 const MAX_TEXT = 200
@@ -164,25 +117,16 @@ function form(body: { image: Blob }): FormData {
 }
 
 /**
- * The vision calls through the SDK transport: the widget token, one new token after a 401,
- * and the offline and network errors. The SDK has no vision client yet, so the calls go
- * through its identity client with the vision base URL per request.
- * - `baseUrl` is a typed per-request option of openapi-fetch 0.17.0 (`RequestOptions.baseUrl`
- *   in its `index.d.ts`; `localBaseUrl` in `createClient`), so the option is type-checked.
- * - The cast changes only the paths type (identity → vision). The transport stays the SDK's.
- * - tests/unit/vision-api.test.ts and tests/e2e/vision.spec.ts assert the request URL
- *   `<apiUrl>/vision/v1/...`: a change in openapi-fetch fails a test, not a user.
- * - Edge route `<apiUrl>/vision`, the same pattern as `/identity` and `/llm`.
- * - Goes away with the SDK vision client (synthwerk-sdk#19).
+ * The vision calls through the SDK vision client (`<apiUrl>/vision`): the widget token, one
+ * new token after a 401, and the offline and network errors come from the SDK transport.
+ * The form names the file `photo.jpg`, as before.
  */
-export function createVisionApi(sw: Pick<Synthwerk, 'api'>, apiUrl: string): VisionApi {
-  const client = sw.api.identity as unknown as Client<VisionPaths>
-  const baseUrl = `${apiUrl.replace(/\/+$/, '')}/vision`
+export function createVisionApi(sw: Pick<Synthwerk, 'api'>): VisionApi {
+  const client = sw.api.vision
 
   return {
     async classify(image, signal) {
       const { data, error, response } = await client.POST('/v1/classifications', {
-        baseUrl,
         body: { image },
         bodySerializer: form,
         ...(signal ? { signal } : {})
@@ -194,7 +138,6 @@ export function createVisionApi(sw: Pick<Synthwerk, 'api'>, apiUrl: string): Vis
     },
     async store(image, signal) {
       const { data, error, response } = await client.POST('/v1/images', {
-        baseUrl,
         body: { image },
         bodySerializer: form,
         ...(signal ? { signal } : {})

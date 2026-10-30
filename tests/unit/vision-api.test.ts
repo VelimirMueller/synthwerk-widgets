@@ -23,7 +23,7 @@ function setup(...extra: ReturnType<typeof visionRoutes.classify>[]) {
     getUserToken: () => 'user-token',
     fetch: api.fetch
   })
-  return { api, vision: createVisionApi(session.sw, `${API}/`) }
+  return { api, vision: createVisionApi(session.sw) }
 }
 
 const failure = async (promise: Promise<unknown>) => {
@@ -62,7 +62,7 @@ describe('createVisionApi', () => {
       getUserToken: () => null,
       fetch: api.fetch
     })
-    const error = await failure(createVisionApi(session.sw, API).classify(photo()))
+    const error = await failure(createVisionApi(session.sw).classify(photo()))
     expect(error.code).toBe('unauthenticated')
     expect(api.calls).toHaveLength(0)
   })

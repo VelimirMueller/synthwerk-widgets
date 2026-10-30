@@ -33,7 +33,7 @@ updated: 2026-10-30
 - The camera also stops on "Close camera", Escape, sign-out, a hidden page and when the element leaves the page.
 - The browser decodes the photo (EXIF orientation applied), draws it on a canvas and encodes a JPEG. Steps: 1280 px at quality 0.85, then lower quality and size until the JPEG is at most 900 KiB.
 - Re-encoding drops the EXIF block of the original file (GPS position, camera serial).
-- The JPEG goes to `POST /vision/v1/classifications` as `multipart/form-data`, field `image`, with the widget token only.
+- The JPEG goes to `POST /vision/v1/classifications` as `multipart/form-data`, field `image`, with the widget token only. The SDK vision client `sw.api.vision` sends it; the types come from the contracts vision spec.
 - The view shows `correction.label` first when the team corrected this picture, else `primary`. The other labels follow, best first.
 - With `save-photos`, the widget then stores the same JPEG with `POST /vision/v1/images`. A failed save keeps the labels on screen.
 - The preview is a `<canvas>`, not an image URL: the host CSP needs no `img-src blob:`.
@@ -132,3 +132,4 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 | Date | Change |
 |---|---|
 | 2026-10-30 | First version (synthwerk#43). |
+| 2026-10-30 | Calls go through the SDK vision client and its generated types (synthwerk-sdk#19). No change for hosts. |

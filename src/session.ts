@@ -1,7 +1,8 @@
 // The widget session: the host hands in the user token, the widget trades it for a
-// short-lived widget token (identity `POST /v1/apps/{appId}/widget-tokens`, synthwerk#30)
-// and the SDK sends only the widget token. Tokens stay in memory: no storage, no cookie.
-import { createSynthwerk, isSynthwerkError, type Synthwerk, SynthwerkError } from '@synthwerk/sdk'
+// short-lived widget token (identity `POST /v1/apps/{appId}/widget-tokens`, synthwerk#30,
+// through the SDK `requestWidgetToken`) and the SDK sends only the widget token.
+// Tokens stay in memory: no storage, no cookie.
+import { createSynthwerk, requestWidgetToken, type Synthwerk } from '@synthwerk/sdk'
 import { problemError } from './errors.ts'
 
 /** Host hook: the access token of the signed-in user, or `null` when signed out. */
@@ -41,14 +42,6 @@ export async function userToken(get: GetUserToken | null | undefined): Promise<s
   }
 }
 
-function readWidgetToken(body: unknown): { token: string; expiresIn: number } | null {
-  if (typeof body !== 'object' || body === null) return null
-  const { access_token: token, expires_in: expiresIn } = body as Record<string, unknown>
-  if (typeof token !== 'string' || token === '' || token.length > 4096) return null
-  if (typeof expiresIn !== 'number' || !Number.isInteger(expiresIn) || expiresIn < 1) return null
-  return { token, expiresIn: Math.min(expiresIn, 900) }
-}
-
 export interface WidgetSession {
   sw: Synthwerk
   /** Drops the cached widget token, for example after the host signs out. */
@@ -59,7 +52,7 @@ export function createSession(options: SessionOptions): WidgetSession {
   const baseFetch = options.fetch ?? ((input: Request) => globalThis.fetch(input))
   const now = options.now ?? Date.now
   const apiUrl = trimSlash(options.apiUrl)
-  const tokenUrl = `${apiUrl}/identity/v1/apps/${encodeURIComponent(options.appId)}/widget-tokens`
+  const identityUrl = `${apiUrl}/identity`
   let cached: Cached | null = null
   /** The running trade and the user token it was started for. */
   let pending: { user: string; promise: Promise<string | null> } | null = null
@@ -68,38 +61,27 @@ export function createSession(options: SessionOptions): WidgetSession {
   /** Bumped by reset(): an exchange that started before it never fills the cache. */
   let generation = 0
 
-  /** Trades `user` for a widget token. */
+  /**
+   * Trades `user` for a widget token. The SDK sends the request (no cookies, no HTTP cache),
+   * checks the body and caps `expiresIn` at 900 s; a bad body throws `bad_gateway`, a failed
+   * fetch throws `offline` or `network`.
+   */
   async function exchange(user: string): Promise<string | null> {
     const started = generation
-    let response: Response
-    try {
-      response = await baseFetch(
-        new Request(tokenUrl, {
-          method: 'POST',
-          headers: { authorization: `Bearer ${user}`, accept: 'application/json' },
-          credentials: 'omit',
-          cache: 'no-store'
-        })
-      )
-    } catch (cause) {
-      if (isSynthwerkError(cause)) throw cause
-      const offline = globalThis.navigator?.onLine === false
-      throw new SynthwerkError({
-        code: offline ? 'offline' : 'network',
-        title: offline ? 'Offline' : 'Network error',
-        cause
-      })
-    }
+    const result = await requestWidgetToken({
+      identityUrl,
+      appId: options.appId,
+      userToken: user,
+      fetch: baseFetch
+    })
+    const { response } = result
     // 401: the user token is gone. Signed out, not an error.
     if (response.status === 401) {
-      await response.body?.cancel().catch(() => undefined)
       if (started === generation && cached?.user === user) cached = null
       return null
     }
-    const body: unknown = await response.json().catch(() => null)
-    if (!response.ok) throw problemError(body, response)
-    const parsed = readWidgetToken(body)
-    if (!parsed) throw problemError(null, new Response(null, { status: 502 }))
+    if (!result.data) throw problemError(result.error, response)
+    const parsed = result.data
     // A reset or another user while the trade ran: never hand out or cache this token.
     if (started !== generation || latestUser !== user) return null
     cached = { token: parsed.token, expiresAt: now() + parsed.expiresIn * 1000, user }

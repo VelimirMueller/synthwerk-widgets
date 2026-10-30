@@ -9,6 +9,10 @@
     "url": "git+https://github.com/VelimirMueller/synthwerk-sdk.git",
     "directory": "packages/ui-vue"
   },
+  "homepage": "https://github.com/VelimirMueller/synthwerk-sdk/tree/main/packages/ui-vue#readme",
+  "bugs": {
+    "url": "https://github.com/VelimirMueller/synthwerk-sdk/issues"
+  },
   "type": "module",
   "sideEffects": [
     "*.css"

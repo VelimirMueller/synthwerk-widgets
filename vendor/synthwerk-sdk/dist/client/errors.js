@@ -1,6 +1,3 @@
-// One error type for every SDK failure. Server codes come from RFC 9457 problem+json
-// (synthwerk-contracts `Problem`); client codes are listed in ClientErrorCode.
-// Never put a token, a prompt or a raw response body into message, detail or cause.
 const RETRYABLE = new Set([
     'network',
     'offline',
@@ -19,6 +16,8 @@ export class SynthwerkError extends Error {
     detail;
     traceId;
     retryAfter;
+    /** `quota_exhausted` only: the scope, the limit and the reset time of the quota that ran out. */
+    quota;
     /** True when the same call can succeed later without a change by the user. */
     retryable;
     constructor(init) {
@@ -29,6 +28,7 @@ export class SynthwerkError extends Error {
         this.detail = init.detail;
         this.traceId = init.traceId;
         this.retryAfter = init.retryAfter;
+        this.quota = init.quota;
         this.retryable = RETRYABLE.has(init.code);
     }
 }
@@ -53,6 +53,28 @@ function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 const CODE = /^[a-z][a-z0-9_]*$/;
+const MAX_QUOTA_LIMIT = 1_000_000_000_000;
+/**
+ * The `quota` member of a problem, or `undefined` when it does not fit `QuotaExceeded`.
+ * A bad member never fails the error: the code and the status still count.
+ */
+function readQuota(value) {
+    if (!isRecord(value))
+        return undefined;
+    const { scope, unit, limit, resets_at: resetsAt } = value;
+    if (scope !== 'user' && scope !== 'org')
+        return undefined;
+    if (unit !== 'tokens')
+        return undefined;
+    if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1)
+        return undefined;
+    if (limit > MAX_QUOTA_LIMIT)
+        return undefined;
+    if (typeof resetsAt !== 'string' || resetsAt.length > 40 || Number.isNaN(Date.parse(resetsAt))) {
+        return undefined;
+    }
+    return { scope, unit, limit, resets_at: resetsAt };
+}
 /**
  * A SynthwerkError from a problem object, or `null` when the value is not a problem.
  * `status` is the HTTP status and wins; the body `status` counts only when there is none
@@ -65,13 +87,15 @@ export function fromProblem(value, status, retryAfter) {
     if (typeof code !== 'string' || !CODE.test(code) || code.length > 64)
         return null;
     const problemStatus = status ?? (typeof value.status === 'number' ? value.status : null);
+    const quota = code === 'quota_exhausted' ? readQuota(value.quota) : undefined;
     return new SynthwerkError({
         code,
         title: typeof title === 'string' ? title.slice(0, 128) : code,
         status: problemStatus,
         ...(typeof detail === 'string' ? { detail: detail.slice(0, 512) } : {}),
         ...(typeof traceId === 'string' ? { traceId } : {}),
-        ...(retryAfter === undefined ? {} : { retryAfter })
+        ...(retryAfter === undefined ? {} : { retryAfter }),
+        ...(quota === undefined ? {} : { quota })
     });
 }
 function retryAfterOf(response) {

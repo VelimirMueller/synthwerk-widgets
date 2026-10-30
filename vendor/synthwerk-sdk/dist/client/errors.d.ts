@@ -1,7 +1,13 @@
+import type { components as LlmComponents } from '../generated/llm.ts';
 /** Codes the SDK sets itself. Server codes (for example `quota_exhausted`) pass through as they are. */
 export type ClientErrorCode = 'unauthenticated' | 'network' | 'offline' | 'aborted' | 'stream_stalled' | 'stream_interrupted' | 'invalid_event' | 'bad_gateway' | 'rate_limited';
 /** A client code, a known server code or any other server code (clients must accept unknown codes). */
 export type ErrorCode = ClientErrorCode | 'invalid_request' | 'forbidden' | 'not_found' | 'input_too_large' | 'too_many_streams' | 'quota_exhausted' | 'model_unavailable' | (string & {});
+/**
+ * The quota that ran out (`quota` of a `quota_exhausted` problem, synthwerk-contracts
+ * `QuotaExceeded`). `scope` `user`: the caller's own quota. `org`: the shared org quota.
+ */
+export type QuotaExceeded = LlmComponents['schemas']['QuotaExceeded'];
 export interface SynthwerkErrorInit {
     code: ErrorCode;
     title: string;
@@ -11,6 +17,8 @@ export interface SynthwerkErrorInit {
     traceId?: string;
     /** Seconds from `Retry-After`. */
     retryAfter?: number;
+    /** `quota_exhausted` only: the quota that ran out. */
+    quota?: QuotaExceeded;
     cause?: unknown;
 }
 export declare class SynthwerkError extends Error {
@@ -21,6 +29,8 @@ export declare class SynthwerkError extends Error {
     readonly detail: string | undefined;
     readonly traceId: string | undefined;
     readonly retryAfter: number | undefined;
+    /** `quota_exhausted` only: the scope, the limit and the reset time of the quota that ran out. */
+    readonly quota: QuotaExceeded | undefined;
     /** True when the same call can succeed later without a change by the user. */
     readonly retryable: boolean;
     constructor(init: SynthwerkErrorInit);

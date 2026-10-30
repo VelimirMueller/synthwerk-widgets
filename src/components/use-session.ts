@@ -66,6 +66,8 @@ export function useSession(
 
   /** Ends the widget state, the session and its cached widget token. */
   function drop(): void {
+    // A check() still waiting for the host token must not bring the dropped state back.
+    run++
     hooks.onStop()
     session.value?.reset()
     session.value = null

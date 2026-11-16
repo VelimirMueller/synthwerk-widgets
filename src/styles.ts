@@ -2,6 +2,7 @@
 // Constructable style sheets need no `style-src 'unsafe-inline'` (CSP-friendly).
 import tokensCss from '@synthwerk/tokens/tokens.css?inline'
 import uiCss from '@synthwerk/ui-vue/ui.css?inline'
+import frameCss from './styles/frame.css?inline'
 import visionCss from './styles/vision.css?inline'
 import widgetCss from './styles/widget.css?inline'
 
@@ -14,6 +15,9 @@ export function scopeToWidget(css: string): string {
 }
 
 export const widgetStyles = `${scopeToWidget(tokensCss)}\n${scopeToWidget(uiCss)}\n${widgetCss}`
+
+/** <synthwerk-chat mode="iframe"> on the host page: only the iframe (widgets#33). */
+export const frameHostStyles = frameCss
 
 /** <synthwerk-vision>: the shared widget styles plus the vision card. */
 export const visionStyles = `${widgetStyles}\n${visionCss}`

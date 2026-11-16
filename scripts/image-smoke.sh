@@ -4,6 +4,7 @@
 # stack does (read-only root, no capabilities, uid 101, tmpfs /tmp), then checks:
 # - each bundle of dist/release.json: status 200, the five host headers, the same bytes and integrity
 #   as the CI build (the build is reproducible);
+# - the chat frame page (widgets#33): text/html, the strict CSP with frame-ancestors *, no CORS header;
 # - an unknown version, another path and a POST: no bundle, no cache header.
 set -euo pipefail
 
@@ -37,9 +38,18 @@ version=$(node -p "require('./dist/release.json').version")
 while read -r path integrity; do
   code=$(curl -sS -D "$tmp/h" -o "$tmp/body" -w '%{http_code}' "$base$path")
   [ "$code" = 200 ] || fail "$path answers $code"
-  [ "$(header "$tmp/h" Content-Type)" = "text/javascript" ] || fail "$path Content-Type"
+  if [[ "$path" == *.html ]]; then
+    [ "$(header "$tmp/h" Content-Type)" = "text/html; charset=utf-8" ] || fail "$path Content-Type"
+    csp=$(header "$tmp/h" Content-Security-Policy)
+    [[ "$csp" == *"script-src 'self';"* && "$csp" == *"frame-ancestors *"* ]] || fail "$path Content-Security-Policy"
+    [[ "$csp" != *unsafe-* ]] || fail "$path: the CSP allows unsafe code"
+    [ "$(header "$tmp/h" Referrer-Policy)" = "no-referrer" ] || fail "$path Referrer-Policy"
+    [ -z "$(header "$tmp/h" Access-Control-Allow-Origin)" ] || fail "$path: a page needs no CORS header"
+  else
+    [ "$(header "$tmp/h" Content-Type)" = "text/javascript" ] || fail "$path Content-Type"
+    [ "$(header "$tmp/h" Access-Control-Allow-Origin)" = "*" ] || fail "$path Access-Control-Allow-Origin"
+  fi
   [ "$(header "$tmp/h" Cache-Control)" = "public, max-age=31536000, immutable" ] || fail "$path Cache-Control"
-  [ "$(header "$tmp/h" Access-Control-Allow-Origin)" = "*" ] || fail "$path Access-Control-Allow-Origin"
   [ "$(header "$tmp/h" Cross-Origin-Resource-Policy)" = "cross-origin" ] || fail "$path Cross-Origin-Resource-Policy"
   [ "$(header "$tmp/h" X-Content-Type-Options)" = "nosniff" ] || fail "$path X-Content-Type-Options"
   got="sha384-$(openssl dgst -sha384 -binary "$tmp/body" | openssl base64 -A)"

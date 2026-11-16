@@ -178,11 +178,13 @@ export const ChatWidget = defineComponent(
       const run = ++load
       studio.value = null
       const { appId, apiUrl } = props.attrs
-      const settings = await loadSettings({
-        appId,
-        apiUrl,
-        ...(props.host.fetch ? { fetch: props.host.fetch } : {})
-      })
+      const settings = props.host.loadSettings
+        ? await props.host.loadSettings()
+        : await loadSettings({
+            appId,
+            apiUrl,
+            ...(props.host.fetch ? { fetch: props.host.fetch } : {})
+          })
       if (run === load) studio.value = settings
     }
 
@@ -237,6 +239,19 @@ export const ChatWidget = defineComponent(
       globalThis.removeEventListener?.('online', setOnline)
       globalThis.removeEventListener?.('offline', setOffline)
     })
+
+    // Chat frame (widgets#33): the parent sizes the iframe from the layout.
+    if (props.host.onLayout) {
+      watch(
+        () => ({
+          open: open.value,
+          position: config.value.position,
+          ready: Boolean(studio.value || !configured.value)
+        }),
+        (layout) => props.host.onLayout?.(layout),
+        { immediate: true }
+      )
+    }
 
     // New app: new studio settings. useSession drops the session for the same change.
     watch(
@@ -406,6 +421,7 @@ export const ChatWidget = defineComponent(
           'data-service': 'widgets',
           'data-mode': current.mode === 'system' ? undefined : current.mode,
           'data-position': current.position,
+          'data-frame': props.host.frame,
           // Hidden launcher until the studio settings are in: no jump to another corner.
           'data-ready': studio.value || !configured.value ? 'true' : undefined,
           lang: current.lang,

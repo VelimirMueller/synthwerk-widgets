@@ -3,6 +3,10 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     environment: 'happy-dom',
+    // No real network: an iframe (chat frame, widgets#33) must not load its page.
+    environmentOptions: {
+      happyDOM: { settings: { navigation: { disableChildFrameNavigation: true } } }
+    },
     include: ['tests/unit/**/*.test.ts'],
     coverage: {
       provider: 'v8',

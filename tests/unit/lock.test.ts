@@ -6,7 +6,8 @@ import { assetUrl, parseLock, verifyBundle } from '../../scripts/release/lock.ts
 
 const files: Record<string, Uint8Array> = {
   'synthwerk-chat.js': new TextEncoder().encode('chat bundle'),
-  'synthwerk-vision.js': new TextEncoder().encode('vision bundle, longer')
+  'synthwerk-vision.js': new TextEncoder().encode('vision bundle, longer'),
+  'synthwerk-chat-frame.html': new TextEncoder().encode('<!doctype html>')
 }
 const read = (file: string): Uint8Array => {
   const bytes = files[file]
@@ -26,6 +27,11 @@ describe('widget host lock releases.json (widgets#32)', () => {
     expect(parseLock(lockOf([release]))).toEqual([release])
   })
 
+  it('a release before the chat frame (v0.3.0) - chat and vision only, parsed (widgets#33)', () => {
+    const old = { ...release, bundles: release.bundles.slice(0, 2) }
+    expect(parseLock(lockOf([old]))).toEqual([old])
+  })
+
   it('not a list, or a version listed twice - refused', () => {
     expect(() => parseLock(lockOf(release))).toThrow(/list of releases/)
     expect(() => parseLock(lockOf([release, release]))).toThrow(/listed twice/)
@@ -34,8 +40,10 @@ describe('widget host lock releases.json (widgets#32)', () => {
   it('bad version, missing bundle, wrong order or wrong path - refused', () => {
     expect(() => parseLock(lockOf([{ ...release, version: 'v0.3.0' }]))).toThrow(/X.Y.Z/)
     expect(() => parseLock(lockOf([{ ...release, bundles: release.bundles.slice(0, 1) }]))).toThrow(
-      /must list 2 bundles/
+      /must list 2 to 3 bundles/
     )
+    const extra = [...release.bundles, release.bundles[0]]
+    expect(() => parseLock(lockOf([{ ...release, bundles: extra }]))).toThrow(/must list 2 to 3/)
     const swapped = [...release.bundles].reverse()
     expect(() => parseLock(lockOf([{ ...release, bundles: swapped }]))).toThrow(/must be chat/)
     const [chat, vision] = release.bundles

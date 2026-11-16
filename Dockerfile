@@ -26,6 +26,7 @@ COPY vendor/ vendor/
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.json vite.config.ts ./
 COPY src/ src/
+COPY public/ public/
 RUN pnpm run build \
  && node scripts/release/sri.ts \
  && node scripts/release/fetch.ts --lock releases.json --out /out --dist dist

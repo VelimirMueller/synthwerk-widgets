@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>synthwerk-chat iframe test page</title>
+    <link rel="stylesheet" href="/demo/page.css">
+  </head>
+  <body>
+    <main>
+      <h1>Host page (iframe mode)</h1>
+      <p>The chat runs in an iframe on the widget host. This page cannot read the chat.</p>
+    </main>
+
+    <!-- The embed: the bundle comes from the widget host (another origin), mode="iframe". -->
+    <script type="module" src="http://localhost:4174/dist/synthwerk-chat.js"></script>
+    <synthwerk-chat
+      mode="iframe"
+      app-id="0192f0a0-0000-7000-8000-000000000001"
+      api-url="http://localhost:4174/api"
+    ></synthwerk-chat>
+
+    <!-- Test only: the host hands in its user token when ?signed-in is set. -->
+    <script type="module" src="/demo/host.js"></script>
+  </body>
+</html>

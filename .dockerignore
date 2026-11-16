@@ -11,4 +11,5 @@
 !tsconfig.json
 !vite.config.ts
 !src/
+!public/
 !vendor/

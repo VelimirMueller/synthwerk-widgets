@@ -110,6 +110,11 @@ jobs:
           SHA: ${{ github.sha }}
           VERSION: ${{ needs.check.outputs.version }}
         run: |
+          # Again here: a tag made after the check would get this release on its own commit.
+          if git ls-remote --exit-code --tags "https://github.com/$REPOSITORY.git" "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::tag v$VERSION exists"
+            exit 1
+          fi
           # The full SHA: gh refuses a short SHA as target-commitish.
           gh release create "v$VERSION" --repo "$REPOSITORY" --target "$SHA" \
             --title "v$VERSION" --notes-file release/release-notes.md \

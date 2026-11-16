@@ -34,22 +34,21 @@ curl -fsS "$base/healthz" | grep -q '"status":"ok"' || fail "/healthz does not a
 header() { grep -i "^$2:" "$1" | head -n 1 | cut -d: -f2- | sed 's/^ //; s/\r$//'; }
 
 version=$(node -p "require('./dist/release.json').version")
-node -e "for (const b of require('./dist/release.json').bundles) console.log(b.path, b.integrity)" |
-  while read -r path integrity; do
-    code=$(curl -sS -D "$tmp/h" -o "$tmp/body" -w '%{http_code}' "$base$path")
-    [ "$code" = 200 ] || fail "$path answers $code"
-    [ "$(header "$tmp/h" Content-Type)" = "text/javascript" ] || fail "$path Content-Type"
-    [ "$(header "$tmp/h" Cache-Control)" = "public, max-age=31536000, immutable" ] || fail "$path Cache-Control"
-    [ "$(header "$tmp/h" Access-Control-Allow-Origin)" = "*" ] || fail "$path Access-Control-Allow-Origin"
-    [ "$(header "$tmp/h" Cross-Origin-Resource-Policy)" = "cross-origin" ] || fail "$path Cross-Origin-Resource-Policy"
-    [ "$(header "$tmp/h" X-Content-Type-Options)" = "nosniff" ] || fail "$path X-Content-Type-Options"
-    got="sha384-$(openssl dgst -sha384 -binary "$tmp/body" | openssl base64 -A)"
-    [ "$got" = "$integrity" ] || fail "$path: image serves $got, CI built $integrity"
-    # A compressed answer must decode to the same bytes (SRI checks the decoded body).
-    curl -sS --compressed -H 'Accept-Encoding: gzip' -o "$tmp/gz" "$base$path"
-    cmp -s "$tmp/body" "$tmp/gz" || fail "$path: the gzip answer decodes to other bytes"
-    echo "ok $path $got"
-  done
+while read -r path integrity; do
+  code=$(curl -sS -D "$tmp/h" -o "$tmp/body" -w '%{http_code}' "$base$path")
+  [ "$code" = 200 ] || fail "$path answers $code"
+  [ "$(header "$tmp/h" Content-Type)" = "text/javascript" ] || fail "$path Content-Type"
+  [ "$(header "$tmp/h" Cache-Control)" = "public, max-age=31536000, immutable" ] || fail "$path Cache-Control"
+  [ "$(header "$tmp/h" Access-Control-Allow-Origin)" = "*" ] || fail "$path Access-Control-Allow-Origin"
+  [ "$(header "$tmp/h" Cross-Origin-Resource-Policy)" = "cross-origin" ] || fail "$path Cross-Origin-Resource-Policy"
+  [ "$(header "$tmp/h" X-Content-Type-Options)" = "nosniff" ] || fail "$path X-Content-Type-Options"
+  got="sha384-$(openssl dgst -sha384 -binary "$tmp/body" | openssl base64 -A)"
+  [ "$got" = "$integrity" ] || fail "$path: image serves $got, CI built $integrity"
+  # A compressed answer must decode to the same bytes (SRI checks the decoded body).
+  curl -sS --compressed -H 'Accept-Encoding: gzip' -o "$tmp/gz" "$base$path"
+  cmp -s "$tmp/body" "$tmp/gz" || fail "$path: the gzip answer decodes to other bytes"
+  echo "ok $path $got"
+done < <(node -e "for (const b of require('./dist/release.json').bundles) console.log(b.path, b.integrity)")
 
 for path in "/widgets/v0.0.0/synthwerk-chat.js" "/widgets/v$version/" "/widgets/v$version/release.json" "/"; do
   code=$(curl -sS -D "$tmp/h" -o /dev/null -w '%{http_code}' "$base$path")

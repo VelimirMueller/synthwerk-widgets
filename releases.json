@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "version": "0.3.0",
+    "bundles": [
+      {
+        "name": "chat",
+        "file": "synthwerk-chat.js",
+        "path": "/widgets/v0.3.0/synthwerk-chat.js",
+        "bytes": 124921,
+        "integrity": "sha384-3Ic0i3g9GhZSgcu+aCCWb+9qXkPn/zQ/m1KeTrTgttoZpx/Fjhn/1LM1kJ8xOC87"
+      },
+      {
+        "name": "vision",
+        "file": "synthwerk-vision.js",
+        "path": "/widgets/v0.3.0/synthwerk-vision.js",
+        "bytes": 129623,
+        "integrity": "sha384-8SZ5DyZVZ0qY5/noMPsi5ZSHPxgzNIP8t0cm8bE3QQ2oWZyqgHadGPd2GtgBxSfI"
+      }
+    ]
+  }
+]

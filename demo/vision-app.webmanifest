@@ -1,0 +1,12 @@
+{
+  "name": "Photo labels (test host app)",
+  "short_name": "Labels",
+  "start_url": "/demo/vision-app.html",
+  "scope": "/demo/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/demo/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

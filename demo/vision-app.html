@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Photo labels</title>
+    <!-- The installed host page (widgets#43): the customer page installs, with its own manifest
+         and icons. Synthwerk ships no manifest, no icons and no service worker. -->
+    <link rel="manifest" href="/demo/vision-app.webmanifest">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" href="/demo/app-icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/demo/page.css">
+  </head>
+  <body>
+    <main>
+      <h1>Photo labels</h1>
+      <script type="module" src="/dist/synthwerk-vision.js"></script>
+      <synthwerk-vision
+        app-id="0192f0a0-0000-7000-8000-000000000001"
+        api-url="/api"
+      ></synthwerk-vision>
+    </main>
+
+    <!-- Test only: the host hands in its user token when ?signed-in is set. -->
+    <script type="module" src="/demo/host.js"></script>
+  </body>
+</html>

@@ -14,7 +14,9 @@ const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
-  '.map': 'application/json'
+  '.map': 'application/json',
+  '.webmanifest': 'application/manifest+json',
+  '.svg': 'image/svg+xml'
 }
 export const CSP = [
   "default-src 'none'",
@@ -22,6 +24,8 @@ export const CSP = [
   "style-src 'self'",
   "connect-src 'self'",
   "img-src 'self'",
+  // The installed host page (demo/vision-app.html, widgets#43) links its web app manifest.
+  "manifest-src 'self'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'"

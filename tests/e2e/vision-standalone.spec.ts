@@ -51,7 +51,8 @@ async function openApp(query = '?signed-in', camera = false): Promise<App> {
     if (m.type() === 'error') seen.problems.push(m.text())
   })
   page.on('pageerror', (e) => seen.problems.push(e.message))
-  // Load again with the watchers on: the app window opened the page at launch.
+  // Load again with the mocks and watchers on. The launch load runs before them, against the
+  // local test server only (no /api there). An app window that starts blank is not standalone.
   await page.goto(url)
   expect(await page.evaluate(() => matchMedia('(display-mode: standalone)').matches)).toBe(true)
   return { context, page, seen }

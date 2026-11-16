@@ -5,7 +5,7 @@ status: beta
 epic: E3
 owner: widgets
 paths: ["src/**", "demo/**", "vite.config.ts", "scripts/release/**", "scripts/image-smoke.sh", "releases.json", "Dockerfile", "image/**", ".github/workflows/release.yml", ".github/workflows/deploy.yml"]
-api: ["GET /identity/v1/apps/{appId}/widget-settings", "POST /identity/v1/apps/{appId}/widget-tokens", "POST /llm/v1/conversations", "POST /llm/v1/conversations/{id}/messages"]
+api: ["GET /identity/v1/apps/{appId}/widget-settings", "POST /identity/v1/apps/{appId}/widget-tokens", "GET /llm/v1/conversations", "GET /llm/v1/conversations/{id}", "POST /llm/v1/conversations", "POST /llm/v1/conversations/{id}/messages"]
 events: []
 mcp: []
 updated: 2026-11-16
@@ -16,6 +16,7 @@ updated: 2026-11-16
 > **In 30 seconds**
 > - One script tag and one `<synthwerk-chat>` element put a chat launcher on any page (synthwerk#34).
 > - Signed-in users chat. The answer streams in as safe Markdown. Raw HTML stays text.
+> - Signed-in users open a past conversation of this site and continue it (synthwerk#54).
 > - Signed-out visitors see a sign-in prompt. The widget sends only the public settings request.
 > - Error, offline and quota states show. German and English.
 > - Look, language and greeting come from the studio settings of the app (widgets#34). Attributes win.
@@ -38,6 +39,18 @@ updated: 2026-11-16
 - Links open only `http`, `https` and `mailto`, in a new tab with `rel="noopener noreferrer nofollow"`.
 - Styles go in as a constructable style sheet. A strict CSP without `unsafe-inline` or `unsafe-eval` works.
 - The widget writes nothing to `localStorage`, `sessionStorage` or cookies.
+
+## Past conversations
+
+- The header button "Past chats" lists the user's past conversations, newest first (llm `GET /v1/conversations`, synthwerk#54).
+- llm binds each widget conversation to the site origin. The list shows only the conversations of this site. A conversation of another site or another user gets 404.
+- Each item shows the title and the date. The title is plain text, never HTML.
+- 20 items per page. "Show more" loads the next page.
+- A click loads the conversation (`GET /v1/conversations/{id}`) and shows its messages. The next message goes into it.
+- A refused or failed load shows the error state and no message. The next message starts a new conversation.
+- "New chat" empties the panel. The next message creates a new conversation.
+- The button is off while an answer streams. The input is off while a conversation loads.
+- The vendored SDK has no type for the list route yet. `src/history.ts` types it from the contract. Move it to the SDK client when the SDK pins contracts 0.6.0.
 
 ## Studio settings
 
@@ -145,7 +158,8 @@ updated: 2026-11-16
 |---|---|
 | Message length | 8000 characters (input `maxlength`, server 413 above) |
 | Widget token reuse | until 30 s before `expires_in`; `expires_in` counts as 900 s at most |
-| Conversation | one per element, in memory only |
+| Conversation | one open per element; past ones stay in llm and load on a click |
+| History page | 20 conversations, newest first, this site only |
 | Stored data | none (no storage, no cookie) |
 | Settings request | one per app and API per page load, 3 s timeout, no retry |
 | Greeting | plain text, 280 characters at most |
@@ -194,6 +208,9 @@ updated: 2026-11-16
 - `tests/unit/lock.test.ts` — `release notes - the summary, then the releases.json entry that parses back`
 - `scripts/image-smoke.sh` — host headers, same bytes as the CI build, 404 without a cache header, POST 403
 
+- `tests/unit/history.test.ts` — `first page - GET /v1/conversations with the page size, no cursor`; `next page - sends the cursor`; `401 - throws a SynthwerkError with code unauthenticated`; `open - shows the stored messages and the next message continues that conversation`; `open - another user’s or another site’s id (404) - no messages, error, the next message makes a new conversation`; `reset - empties the chat and the next message makes a new conversation`; `reset while a conversation loads - the late answer is dropped`
+- `tests/e2e/chat.spec.ts` — `past conversations - the user lists them, opens one and continues it`; `past conversations - a conversation llm refuses (404) shows no message`; `past conversations - new chat empties the panel`
+
 ## Changes
 
 | Date | Change |
@@ -205,3 +222,4 @@ updated: 2026-11-16
 | 2026-10-30 | `release.json` lists both bundles (widgets#39). The not-allowed state shows in a real browser: identity answers the token trade preflight for every origin and makes its 403 `origin_not_allowed` readable (widgets#41). No change for hosts. |
 | 2026-11-16 | The sign-in state uses the SDK `createWidgetSession` (synthwerk-sdk 0.3.0). The local session logic is gone. Same cache, trade and reset rules. No change for hosts (synthwerk#52). |
 | 2026-11-16 | Widget host image (widgets#32): nginx serves every version in `releases.json` under `/widgets/v<X.Y.Z>/` with the host headers. `release.yml` makes the GitHub Release with the SRI hashes in the notes. `deploy.yml` publishes the image. Repo tier `deploys`. Version 0.3.0. No change for hosts. |
+| 2026-11-16 | Past conversations (synthwerk#54): a "Past chats" list of this site, open and continue one, "New chat". New llm calls `GET /v1/conversations` and `GET /v1/conversations/{id}`. No change for hosts. |

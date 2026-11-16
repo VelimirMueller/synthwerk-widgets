@@ -136,6 +136,68 @@
   min-height: 0;
 }
 
+/* Past conversations (synthwerk#54) */
+.sw-panel__history {
+  margin-left: auto;
+}
+
+.sw-history {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.sw-history__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sw-history__item {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sw-history__item:hover {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.sw-history__item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.sw-history__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sw-history__date,
+.sw-history__empty {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
 /* Messages */
 .sw-messages {
   flex: 1;
@@ -315,4 +377,9 @@
   .sw-root--open .sw-launcher {
     display: none;
   }
+}
+
+/* A banner in the history list sits in its padding. */
+.sw-history .sw-banner {
+  margin: 0;
 }

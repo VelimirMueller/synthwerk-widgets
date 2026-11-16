@@ -199,3 +199,121 @@ test('below 640 px - the panel is a full-screen sheet', async ({ page }) => {
   await page.getByRole('button', { name: 'Close chat' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
+
+// synthwerk#54: past conversations. llm owns the isolation (Go tests in synthwerk-llm);
+// here the widget shows only what llm returns and never shows a refused conversation.
+const PAST = {
+  items: [
+    {
+      id: '0192f0a0-0000-7000-8000-0000000000d2',
+      model: 'default',
+      title: 'Where is my <b>order</b>?',
+      created_at: '2026-11-15T10:00:00Z'
+    },
+    {
+      id: '0192f0a0-0000-7000-8000-0000000000d1',
+      model: 'default',
+      title: 'Opening hours',
+      created_at: '2026-11-01T10:00:00Z'
+    }
+  ]
+}
+
+async function pastBackend(page: Page, foreign: string) {
+  await page.route(
+    (url) => url.pathname === '/api/llm/v1/conversations' && url.searchParams.has('limit'),
+    (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PAST) })
+  )
+  await page.route('**/api/llm/v1/conversations/0192f0a0-0000-7000-8000-0000000000d1', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: '0192f0a0-0000-7000-8000-0000000000d1',
+        model: 'default',
+        created_at: '2026-11-01T10:00:00Z',
+        messages: [
+          {
+            id: 'a1',
+            role: 'user',
+            content: 'Opening hours',
+            status: 'completed',
+            created_at: '2026-11-01T10:00:01Z'
+          },
+          {
+            id: 'a2',
+            role: 'assistant',
+            content: 'We open at **9**.',
+            status: 'completed',
+            created_at: '2026-11-01T10:00:02Z'
+          }
+        ]
+      })
+    })
+  )
+  await page.route(`**/api/llm/v1/conversations/${foreign}`, (route) =>
+    route.fulfill({
+      status: 404,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ title: 'Not found', status: 404, code: 'not_found' })
+    })
+  )
+}
+
+test('past conversations - the user lists them, opens one and continues it', async ({ page }) => {
+  const seen = await watch(page)
+  await fakeBackend(page, { body: sse(['Until', ' 6.']) })
+  await pastBackend(page, 'none')
+  await page.goto('/?signed-in')
+  await page.getByRole('button', { name: 'Open chat' }).click()
+  await page.getByRole('button', { name: 'Past chats' }).click()
+
+  const list = page.getByRole('list', { name: 'Past chats' })
+  await expect(list.getByRole('button')).toHaveCount(2)
+  // A title is plain text: the tag shows as text, no element.
+  await expect(list.getByRole('button').first()).toContainText('Where is my <b>order</b>?')
+  await expect(list.locator('b')).toHaveCount(0)
+
+  await list.getByRole('button', { name: /Opening hours/ }).click()
+  await expect(page.locator('.sw-msg--user')).toHaveText(['You: Opening hours'])
+  await expect(page.locator('.sw-msg--assistant strong')).toHaveText('9')
+
+  await send(page, 'And on Sunday?')
+  await expect(page.locator('.sw-msg--assistant.sw-msg--done').last()).toContainText('Until 6.')
+  // The message goes into the opened conversation: no new conversation.
+  expect(seen.api).toContain(
+    'POST /api/llm/v1/conversations/0192f0a0-0000-7000-8000-0000000000d1/messages'
+  )
+  expect(seen.api).not.toContain('POST /api/llm/v1/conversations')
+  expect(seen.problems).toEqual([])
+})
+
+test('past conversations - a conversation llm refuses (404) shows no message', async ({ page }) => {
+  const foreign = '0192f0a0-0000-7000-8000-0000000000d2'
+  await watch(page)
+  await fakeBackend(page, { body: sse(['ok']) })
+  await pastBackend(page, foreign)
+  await page.goto('/?signed-in')
+  await page.getByRole('button', { name: 'Open chat' }).click()
+  await page.getByRole('button', { name: 'Past chats' }).click()
+  await page.getByRole('list', { name: 'Past chats' }).getByRole('button').first().click()
+  await expect(page.getByRole('alert')).toContainText('Something went wrong')
+  await expect(page.locator('.sw-msg--user')).toHaveCount(0)
+  await expect(page.locator('.sw-msg--greeting')).toBeVisible()
+})
+
+test('past conversations - new chat empties the panel', async ({ page }) => {
+  await watch(page)
+  await fakeBackend(page, { body: sse(['ok']) })
+  await pastBackend(page, 'none')
+  await page.goto('/?signed-in')
+  await page.getByRole('button', { name: 'Open chat' }).click()
+  await page.getByRole('button', { name: 'Past chats' }).click()
+  await page.getByRole('button', { name: /Opening hours/ }).click()
+  await expect(page.locator('.sw-msg--user')).toHaveCount(1)
+  await page.getByRole('button', { name: 'Past chats' }).click()
+  await page.getByRole('button', { name: 'New chat' }).click()
+  await expect(page.locator('.sw-msg--user')).toHaveCount(0)
+  await expect(page.locator('.sw-msg--greeting')).toBeVisible()
+})

@@ -1,4 +1,5 @@
 // The widget UI: a launcher button and the chat panel (a full-screen sheet below 640 px).
+import type { WidgetSession } from '@synthwerk/sdk'
 import { SwButton, SwInput } from '@synthwerk/ui-vue'
 import {
   computed,
@@ -15,8 +16,9 @@ import {
 } from 'vue'
 import { type Chat, type ChatMessage, createChat } from '../chat.ts'
 import { type AttributeConfig, resolveConfig, type WidgetConfig } from '../config.ts'
-import type { WidgetError } from '../errors.ts'
-import { formatTime, type Messages, messagesFor } from '../i18n.ts'
+import { classify, type WidgetError } from '../errors.ts'
+import { type ConversationSummary, listConversations } from '../history.ts'
+import { formatDate, formatTime, type Messages, messagesFor } from '../i18n.ts'
 import { renderMarkdown } from '../markdown.ts'
 import { loadSettings, type StudioSettings } from '../settings.ts'
 import { chatIcon, closeIcon } from './icons.ts'
@@ -43,6 +45,20 @@ function errorText(t: Messages, error: WidgetError, lang: WidgetConfig['lang']):
   }
 }
 
+interface HistoryState {
+  items: ConversationSummary[]
+  /** Cursor of the next, older page. */
+  next: string | undefined
+  loading: boolean
+  error: WidgetError | null
+  /** At least one load ended. */
+  loaded: boolean
+}
+
+function emptyHistory(): HistoryState {
+  return { items: [], next: undefined, loading: false, error: null, loaded: false }
+}
+
 export const ChatWidget = defineComponent(
   (props: { attrs: AttributeConfig; host: WidgetHost }) => {
     const open = ref(false)
@@ -55,8 +71,13 @@ export const ChatWidget = defineComponent(
     const draft = ref('')
     const chat = shallowRef<Chat | null>(null)
     const panel = ref<HTMLElement | null>(null)
+    let sw: WidgetSession['sw'] | null = null
     const t = computed(() => messagesFor(config.value.lang))
+    /** The panel shows the chat or the list of past conversations (synthwerk#54). */
+    const view = ref<'chat' | 'history'>('chat')
+    const history = shallowRef<HistoryState>(emptyHistory())
     let load = 0
+    let historyRun = 0
     const {
       auth,
       configured,
@@ -68,13 +89,71 @@ export const ChatWidget = defineComponent(
         active: () => open.value,
         onStart: (session) => {
           chat.value = createChat({ sw: session.sw })
+          sw = session.sw
+          closeHistory()
         },
         onStop: () => {
           chat.value?.dispose()
           chat.value = null
+          sw = null
+          closeHistory()
         }
       }
     )
+
+    function closeHistory(): void {
+      historyRun++
+      view.value = 'chat'
+      history.value = emptyHistory()
+    }
+
+    /** Loads one page of past conversations: the first one, or the next after `next`. */
+    async function loadHistory(more: boolean): Promise<void> {
+      const client = sw
+      if (!client) return
+      const run = ++historyRun
+      const before = more ? history.value : emptyHistory()
+      history.value = { ...before, loading: true, error: null }
+      try {
+        const page = await listConversations(client, more ? before.next : undefined)
+        if (run !== historyRun) return
+        history.value = {
+          items: [...before.items, ...page.items],
+          next: page.next_cursor,
+          loading: false,
+          error: null,
+          loaded: true
+        }
+      } catch (error) {
+        if (run !== historyRun) return
+        history.value = { ...before, loading: false, error: classify(error), loaded: true }
+        if (history.value.error?.kind === 'signed_out') signOut()
+      }
+    }
+
+    function toggleHistory(): void {
+      if (view.value === 'history') {
+        closeHistory()
+        return
+      }
+      view.value = 'history'
+      void loadHistory(false)
+    }
+
+    async function pick(id: string): Promise<void> {
+      const current = chat.value
+      if (!current) return
+      closeHistory()
+      await current.open(id)
+      if (current.state.error?.kind === 'signed_out') signOut()
+      focusInput()
+    }
+
+    function newChat(): void {
+      chat.value?.reset()
+      closeHistory()
+      focusInput()
+    }
 
     /** Loads the studio settings once per app. Until then the launcher stays hidden. */
     async function loadStudio(): Promise<void> {
@@ -192,7 +271,8 @@ export const ChatWidget = defineComponent(
       const current = chat.value
       const messages = current?.state.messages ?? []
       const streaming = current?.state.streaming ?? false
-      const blocked = !online.value || current?.state.error?.kind === 'quota'
+      const blocked =
+        !online.value || current?.state.error?.kind === 'quota' || current?.state.loading === true
       return [
         h(
           'ol',
@@ -232,6 +312,56 @@ export const ChatWidget = defineComponent(
       ]
     }
 
+    function renderHistory(text: Messages): VNode {
+      const state = history.value
+      const lang = config.value.lang
+      const items = state.items.map((item: ConversationSummary) =>
+        h('li', { key: item.id }, [
+          h('button', { class: 'sw-history__item', type: 'button', onClick: () => pick(item.id) }, [
+            // Text nodes: a title is plain text, never HTML.
+            h('span', { class: 'sw-history__title' }, item.title),
+            h(
+              'time',
+              { class: 'sw-history__date', datetime: item.created_at },
+              formatDate(new Date(item.created_at), lang)
+            )
+          ])
+        ])
+      )
+      return h('div', { class: 'sw-history' }, [
+        h(SwButton, { kind: 'secondary', size: 'sm', onClick: newChat }, () => text.newChat),
+        state.error
+          ? h('div', { class: ['sw-banner', `sw-banner--${state.error.kind}`], role: 'alert' }, [
+              h('p', errorText(text, state.error, lang)),
+              h(
+                SwButton,
+                { kind: 'ghost', size: 'sm', onClick: () => loadHistory(false) },
+                () => text.retry
+              )
+            ])
+          : null,
+        state.loaded && !state.error && state.items.length === 0
+          ? h('p', { class: 'sw-history__empty' }, text.noHistory)
+          : null,
+        h(
+          'ul',
+          {
+            class: 'sw-history__list',
+            'aria-label': text.history,
+            'aria-busy': state.loading ? 'true' : 'false'
+          },
+          items
+        ),
+        state.next && !state.loading
+          ? h(
+              SwButton,
+              { kind: 'ghost', size: 'sm', onClick: () => loadHistory(true) },
+              () => text.loadMore
+            )
+          : null
+      ])
+    }
+
     function renderBody(text: Messages): VNode | (VNode | null)[] | undefined {
       if (!configured.value) {
         return h(
@@ -241,7 +371,8 @@ export const ChatWidget = defineComponent(
         )
       }
       if (auth.value === 'signed_out') return renderSignIn(config.value.signInUrl, props.host, text)
-      if (auth.value === 'signed_in') return renderChat(text)
+      if (auth.value === 'signed_in')
+        return view.value === 'history' ? renderHistory(text) : renderChat(text)
       return undefined
     }
 
@@ -276,6 +407,20 @@ export const ChatWidget = defineComponent(
                 [
                   h('header', { class: 'sw-panel__header' }, [
                     h('p', { class: 'sw-panel__title' }, text.title),
+                    auth.value === 'signed_in' && configured.value
+                      ? h(
+                          SwButton,
+                          {
+                            kind: 'ghost',
+                            size: 'sm',
+                            class: 'sw-panel__history',
+                            'aria-pressed': view.value === 'history' ? 'true' : 'false',
+                            disabled: chat.value?.state.streaming === true,
+                            onClick: toggleHistory
+                          },
+                          () => (view.value === 'history' ? text.backToChat : text.history)
+                        )
+                      : null,
                     h(
                       'button',
                       {

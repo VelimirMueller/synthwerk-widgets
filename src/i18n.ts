@@ -26,6 +26,11 @@ export interface Messages {
   interrupted: string
   error: string
   retry: string
+  history: string
+  backToChat: string
+  newChat: string
+  noHistory: string
+  loadMore: string
 }
 
 const en: Messages = {
@@ -50,7 +55,12 @@ const en: Messages = {
   tooLong: 'The message is too long. Make it shorter.',
   interrupted: 'The answer stopped. Try again.',
   error: 'Something went wrong. Try again.',
-  retry: 'Try again'
+  retry: 'Try again',
+  history: 'Past chats',
+  backToChat: 'Back to the chat',
+  newChat: 'New chat',
+  noHistory: 'No past chats yet.',
+  loadMore: 'Show more'
 }
 
 const de: Messages = {
@@ -75,7 +85,12 @@ const de: Messages = {
   tooLong: 'Die Nachricht ist zu lang. Kürzen Sie sie.',
   interrupted: 'Die Antwort wurde unterbrochen. Versuchen Sie es noch einmal.',
   error: 'Etwas ist schiefgelaufen. Versuchen Sie es noch einmal.',
-  retry: 'Erneut versuchen'
+  retry: 'Erneut versuchen',
+  history: 'Frühere Chats',
+  backToChat: 'Zurück zum Chat',
+  newChat: 'Neuer Chat',
+  noHistory: 'Noch keine früheren Chats.',
+  loadMore: 'Mehr anzeigen'
 }
 
 const catalog: Record<Lang, Messages> = { en, de }
@@ -98,5 +113,14 @@ export function formatTime(date: Date, lang: Lang): string {
   return new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
     hour: '2-digit',
     minute: '2-digit'
+  }).format(date)
+}
+
+/** Local date of a past conversation, for example `16 Nov 2026`. */
+export function formatDate(date: Date, lang: Lang): string {
+  return new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
   }).format(date)
 }

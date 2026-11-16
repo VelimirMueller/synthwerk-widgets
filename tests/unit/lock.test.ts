@@ -40,7 +40,7 @@ describe('widget host lock releases.json (widgets#32)', () => {
   it('bad version, missing bundle, wrong order or wrong path - refused', () => {
     expect(() => parseLock(lockOf([{ ...release, version: 'v0.3.0' }]))).toThrow(/X.Y.Z/)
     expect(() => parseLock(lockOf([{ ...release, bundles: release.bundles.slice(0, 1) }]))).toThrow(
-      /must list 2 to 3 bundles/
+      /must list 2 to 3 bundles, the first ones of/
     )
     const extra = [...release.bundles, release.bundles[0]]
     expect(() => parseLock(lockOf([{ ...release, bundles: extra }]))).toThrow(/must list 2 to 3/)

@@ -86,3 +86,19 @@ describe('release record (widgets#39)', () => {
     }
   })
 })
+
+describe('frame page CSP', () => {
+  it('the e2e server sends the CSP of image/nginx.conf - no drift', async () => {
+    // Paths from the repo root: vitest runs there.
+    const { readFile } = await import('node:fs/promises')
+    const nginx = await readFile('image/nginx.conf', 'utf8')
+    const serve = await readFile('tests/e2e/serve.ts', 'utf8')
+    const fromNginx = /add_header Content-Security-Policy "([^"]*frame-ancestors[^"]*)"/.exec(
+      nginx
+    )?.[1]
+    const list = /export const FRAME_CSP = \[([^\]]*)\]/.exec(serve)?.[1] ?? ''
+    const fromServe = [...list.matchAll(/"([^"]+)"|'([^']+)'/g)].map((m) => m[1] ?? m[2]).join('; ')
+    expect(fromNginx).toBeTruthy()
+    expect(fromServe).toBe(fromNginx)
+  })
+})

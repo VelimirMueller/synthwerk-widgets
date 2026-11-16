@@ -37,7 +37,7 @@ export function parseLock(text: string): Release[] {
       bundles.length > BUNDLES.length
     ) {
       throw new Error(
-        `${where}: v${version} must list ${REQUIRED_BUNDLES} to ${BUNDLES.length} bundles`
+        `${where}: v${version} must list ${REQUIRED_BUNDLES} to ${BUNDLES.length} bundles, the first ones of ${BUNDLES.map((b) => b.name).join(', ')} in this order`
       )
     }
     return {

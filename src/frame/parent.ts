@@ -127,6 +127,9 @@ export function mountFrame(root: ShadowRoot, options: MountFrameOptions): () => 
   const win = options.window ?? window
   const { attrs, host } = options
   const frameOrigin = originOf(options.frameUrl.href)
+  if (!frameOrigin) {
+    console.warn('synthwerk-chat: the frame page URL is not http(s), the chat frame stays empty')
+  }
   const scope = effectScope()
   let teardown: (() => void) | null = null
 

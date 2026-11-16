@@ -51,3 +51,9 @@ export declare function fromProblem(value: unknown, status: number | null, retry
 export declare function fromResponse(response: Response): Promise<SynthwerkError>;
 /** Maps a rejected `fetch` (or `read`) to `aborted`, `offline` or `network`. */
 export declare function fromFetchFailure(cause: unknown, signal?: AbortSignal): SynthwerkError;
+/**
+ * The SynthwerkError of a typed-client result that is not 2xx (`{ error, response }` of
+ * `sw.api.*`). A problem body gives its code (and `quota`); any other body gives a code
+ * from the status. The body itself never reaches the error.
+ */
+export declare function errorFromResult(body: unknown, response: Response | undefined): SynthwerkError;

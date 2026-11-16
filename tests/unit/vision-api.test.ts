@@ -1,5 +1,5 @@
+import { createWidgetSession } from '@synthwerk/sdk'
 import { describe, expect, it } from 'vitest'
-import { createSession } from '../../src/session.ts'
 import { createVisionApi, readClassification } from '../../src/vision/api.ts'
 import {
   API,
@@ -17,7 +17,7 @@ const photo = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type:
 
 function setup(...extra: ReturnType<typeof visionRoutes.classify>[]) {
   const api = fakeFetch([routes.token(), ...extra])
-  const session = createSession({
+  const session = createWidgetSession({
     appId: APP_ID,
     apiUrl: `${API}/`,
     getUserToken: () => 'user-token',
@@ -56,7 +56,7 @@ describe('createVisionApi', () => {
 
   it('signed out - unauthenticated before any vision request', async () => {
     const api = fakeFetch([visionRoutes.classify()])
-    const session = createSession({
+    const session = createWidgetSession({
       appId: APP_ID,
       apiUrl: API,
       getUserToken: () => null,

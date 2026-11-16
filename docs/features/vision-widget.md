@@ -25,7 +25,7 @@ updated: 2026-10-30
 - The element renders an inline card into an open shadow root. Host CSS and widget CSS do not mix.
 - The look comes from the attributes only. The card does not load the studio widget settings (`widget-settings`) of the chat launcher.
 - The SRI script (`scripts/release/sri.ts`) covers both bundles. `dist/release.json` lists the versioned path, size and integrity of `synthwerk-vision.js` next to the chat bundle (widgets#39).
-- The sign-in, the widget token and the session rules are the same as in the [chat widget](chat-widget.md): same code (`src/session.ts`, `src/components/use-session.ts`).
+- The sign-in, the widget token and the session rules are the same as in the [chat widget](chat-widget.md): same code (SDK `createWidgetSession`, `src/components/use-session.ts`).
 - Each host session change drops the result, the photo, the session and the cached widget token, and stops the camera.
 - "Choose photo" opens the file picker. Any picture the browser can decode works (JPEG, PNG, WebP, HEIC in Safari).
 - "Use camera" asks for the camera only after the click. No auto-start. Video only, no audio. The back camera is preferred.

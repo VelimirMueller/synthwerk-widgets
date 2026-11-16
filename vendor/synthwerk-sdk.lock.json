@@ -1,17 +1,19 @@
 {
   "source": {
     "repository": "https://github.com/VelimirMueller/synthwerk-sdk.git",
-    "commit": "a29c2c9c808f27018c3512bff7ddad255075a891"
+    "commit": "2e209f952e6a33143c3f37fca18dedc8661da9ca"
   },
   "packages": [
     {
       "name": "@synthwerk/sdk",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "directory": "packages/sdk",
       "vendor": "vendor/synthwerk-sdk",
       "files": {
         "LICENSE": "db58c792e38ccc2964118dbdb6374a35889a37c7072226c2dbf5e6d448b977b8",
         "README.md": "e71144ad33fdc0ffc1161139cef3f3753eac1dcd78b9588b95594b369f50ad1e",
+        "dist/app/app.d.ts": "40bc898cc3f623db4a675d813400bf75e7f363a20d8b57359ae77f414269f74c",
+        "dist/app/app.js": "b61bcc47ef5f62b816649ef49a2a9e11f7ef74b363450761d2d9e60a7e554f27",
         "dist/auth/single-flight.d.ts": "6f48fec6aa7bfd8bf258a80afc7874ff52a28c65a7eaf4f5cb2ab5ec8e1f87b3",
         "dist/auth/single-flight.js": "8a1b872910e445bc70248cc89d4a480b8b03693ec2c61ef8c9173424b004379a",
         "dist/auth/token.d.ts": "2879927ff20319dc8914dbe93e2ffd88b36d53407ef4529d203d4664e67ef2ac",
@@ -20,8 +22,8 @@
         "dist/auth/types.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "dist/client/create.d.ts": "eb9f77e90d78427a08e38456922c34f9f0cb30342ce07677fe4e267b819c2948",
         "dist/client/create.js": "11a97fda26a98d58b1df7887540aa5b93cf59844977339f4cd54451649fa1dd2",
-        "dist/client/errors.d.ts": "d4476483f55adacc890d88d1d3e78d0b442ca495e85c6aa4a68de93a82b7bf1e",
-        "dist/client/errors.js": "11d43a39ce80f62e67a7c6e5308e9940d445b8260d9d1c6474273e0a0bde55c5",
+        "dist/client/errors.d.ts": "7247af163a342b321f67f270645a939dfeb78c9ffcd92390608fbac5d89b8ea0",
+        "dist/client/errors.js": "219800a16bf613956fe271d5b78c4577c0394c6f1165b0f7b018d08d4c49b0e0",
         "dist/client/transport.d.ts": "50d34be0c19fbac20f8a57fed4c72d1591663c5aa76292d6650db403ab3e3bc3",
         "dist/client/transport.js": "79fed36832129b6e9f112bcb9678f74124dc958e4b7027dfe8bbdfb5896fc183",
         "dist/client/url.d.ts": "a09dc27876332bedc804d623d826aae6df3c6d92a3b674921ee9a421f3e13972",
@@ -32,19 +34,31 @@
         "dist/generated/llm.js": "18a6d5ef538328829ea5c1184635677930381ff974b6cbf02e0c1f94d73cd750",
         "dist/generated/vision.d.ts": "2aa7621d96a500175b86e7c7e773ae169d878b60f8cf5aa4d3ff94da42e90f94",
         "dist/generated/vision.js": "6a9d79a45ee5ad257d35bab617fb87b3bc23b2bba44c44af22158dd3dcad155e",
+        "dist/identity/widget-session.d.ts": "dc045ca30fbd30736518cd5f2e4af1c74a1e82d823c655bac2e630b0801eb721",
+        "dist/identity/widget-session.js": "ef39477bfa76e42aae532c8c5ed98263362b856f15918de9fb4dcdccd115c077",
         "dist/identity/widget-token.d.ts": "0c023472837974af6d6e8509272531685b77bae278a3cfc412f2ca9e75c76fc8",
         "dist/identity/widget-token.js": "5cfe25ee61b72a14cc3f5602575bcee8ae0a6e0c00261b55e9195d35a9425f40",
-        "dist/index.d.ts": "7ab93f0bae86617f1ae1bdf96e5ef630d80f9427845d3dd01516046f5d79dd0d",
-        "dist/index.js": "7c34a1ffc32f3c7f3941f22963b4823ecb26b75fc02f50ee9c862f6d8898197c",
+        "dist/index.d.ts": "3a07b3868b9ed7e397266af9ec8ddb0d3fe535e451c9c78a7c6a4da8846c2b53",
+        "dist/index.js": "2a0b194f20258846a56a8b609d8ea0a1663abc9079d1b1ca2798f26739e0736e",
         "dist/llm/chat.d.ts": "50769c2dfb9f8c6ad84b9a900e7a755b14df78e401f29ddb46caa6f23ee44814",
         "dist/llm/chat.js": "767493a2e86d3af4a0adf728fc848d8bc2813120e86f8a58b5dbc7cbd627af1a",
         "dist/llm/events.d.ts": "8801101aab1ded31960c3e2233c1294f1b96ea45d7c0779ad29c8c4802d9cd35",
         "dist/llm/events.js": "c6f53aaaf20d91ff54a5874f6b9d9c0f57d604bac6059362a56630c8b669bb56",
         "dist/llm/sse.d.ts": "ba9301d78426dd97a00f98c7603d444ed435707cb631146b23b364fe192b2fde",
         "dist/llm/sse.js": "6aa26f15752c3a4c4092ea68b1d994c45cef5fb01cecfc8a5a5826ed0d6cc0fb",
+        "dist/state/chat-store.d.ts": "7363bcf377f7f238f927732568a870a8c2626246b77f305ae9fa956de6f5b905",
+        "dist/state/chat-store.js": "1839618643e0239b2d401725604e6b2ec774dc7842f969a3ce04b22ef16e09c0",
+        "dist/state/classify-store.d.ts": "15ff50c0fcf1b7d2471d526c84cb56c3f28fdab81286959e9411fb7c45df2ac5",
+        "dist/state/classify-store.js": "c959c32eec71e094fdd10b89cbc6ec1d57d6b5540933465680b48285220c11b3",
+        "dist/state/error-state.d.ts": "d8dfa03c16290a83bf76e0c8ec627b9991903c023d64de7ec6f5d49b59c101c9",
+        "dist/state/error-state.js": "83815f015bb98323c12f9b5ef6da78e8826ebff552228271fdd5a6236f3e140e",
+        "dist/state/queries.d.ts": "d2fcafb8e6774501ed8c1bfc738fe67adc8f0d3cb66f53016a56cdd92d37330b",
+        "dist/state/queries.js": "133adb097c902642101aa4a44f369f2dd2937578a475e670505ff57071249b58",
+        "dist/state/store.d.ts": "cac4581894f80798c81d70a02b9136182d42658a7855afad4bfe95594d49ee9d",
+        "dist/state/store.js": "f9139db1a336e46424b1144cadfef207ce75acbc5d0ba90ffc5b44accef0507d",
         "dist/vision/body.d.ts": "90b13003d5000a1cc880fd240cfd3c96418f10121ef3172ba80b275b99ddaad5",
         "dist/vision/body.js": "67fb7f4f24461e5f3721d752d3dd98061ab8c05233c7ca507eab57aa47b2c8aa",
-        "package.json": "f1e57387cff6fa897e1dcc6dec6dcb450b0c29f3597358f8f0dfa18ba9c7eb7a"
+        "package.json": "cebb48aed1e635bb330b987500c6809c5b8a42e6b19fdff4e1ec355663aa3038"
       }
     },
     {

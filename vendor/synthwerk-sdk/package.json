@@ -1,6 +1,6 @@
 {
   "name": "@synthwerk/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Synthwerk SDK core: token sign-in, typed API client and chat stream client. Framework-free, browser and Node 24",
   "license": "MIT",
   "author": "Velimir Mueller",

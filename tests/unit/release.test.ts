@@ -4,7 +4,8 @@ import { BUNDLES, releaseOf, snippetOf, summaryOf } from '../../scripts/release/
 
 const files: Record<string, Uint8Array> = {
   'synthwerk-chat.js': new TextEncoder().encode('chat bundle'),
-  'synthwerk-vision.js': new TextEncoder().encode('vision bundle, longer')
+  'synthwerk-vision.js': new TextEncoder().encode('vision bundle, longer'),
+  'synthwerk-chat-frame.html': new TextEncoder().encode('<!doctype html>')
 }
 const read = (file: string): Uint8Array => {
   const bytes = files[file]
@@ -32,12 +33,23 @@ describe('release record (widgets#39)', () => {
         path: '/widgets/v0.3.0/synthwerk-vision.js',
         bytes: 21,
         integrity: sha384(read('synthwerk-vision.js'))
+      },
+      {
+        name: 'chat-frame',
+        file: 'synthwerk-chat-frame.html',
+        path: '/widgets/v0.3.0/synthwerk-chat-frame.html',
+        bytes: 15,
+        integrity: sha384(read('synthwerk-chat-frame.html'))
       }
     ])
   })
 
   it('every bundle of the vite build is in the list', () => {
-    expect(BUNDLES.map((b) => b.file)).toEqual(['synthwerk-chat.js', 'synthwerk-vision.js'])
+    expect(BUNDLES.map((b) => b.file)).toEqual([
+      'synthwerk-chat.js',
+      'synthwerk-vision.js',
+      'synthwerk-chat-frame.html'
+    ])
   })
 
   it('version not X.Y.Z - refused', () => {
@@ -62,14 +74,31 @@ describe('release record (widgets#39)', () => {
     )
   })
 
-  it('job summary - one row per bundle with path, size and integrity, then both snippets', () => {
+  it('job summary - one row per file with path, size and integrity, snippets for the scripts only', () => {
     const release = releaseOf('0.3.0', read)
     const summary = summaryOf(release)
     for (const b of release.bundles) {
       expect(summary).toContain(
         `| ${b.name} | \`${b.path}\` | ${b.bytes} bytes | \`${b.integrity}\` |`
       )
-      expect(summary).toContain(snippetOf(b))
+      if (b.name === 'chat-frame') expect(summary).not.toContain(snippetOf(b))
+      else expect(summary).toContain(snippetOf(b))
     }
+  })
+})
+
+describe('frame page CSP', () => {
+  it('the e2e server sends the CSP of image/nginx.conf - no drift', async () => {
+    // Paths from the repo root: vitest runs there.
+    const { readFile } = await import('node:fs/promises')
+    const nginx = await readFile('image/nginx.conf', 'utf8')
+    const serve = await readFile('tests/e2e/serve.ts', 'utf8')
+    const fromNginx = /add_header Content-Security-Policy "([^"]*frame-ancestors[^"]*)"/.exec(
+      nginx
+    )?.[1]
+    const list = /export const FRAME_CSP = \[([^\]]*)\]/.exec(serve)?.[1] ?? ''
+    const fromServe = [...list.matchAll(/"([^"]+)"|'([^']+)'/g)].map((m) => m[1] ?? m[2]).join('; ')
+    expect(fromNginx).toBeTruthy()
+    expect(fromServe).toBe(fromNginx)
   })
 })

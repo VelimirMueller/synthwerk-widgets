@@ -1,6 +1,6 @@
 // The base of every Synthwerk custom element: the host hook, the attributes and the Vue
 // app in an open shadow root. <synthwerk-chat> and <synthwerk-vision> extend it.
-import { type App, type Component, createApp, reactive } from 'vue'
+import { type Component, createApp, reactive } from 'vue'
 import type { WidgetHost } from './components/use-session.ts'
 import type { GetUserToken } from './session.ts'
 import { applyStyles } from './styles.ts'
@@ -11,7 +11,7 @@ export const SIGN_IN_EVENT = 'synthwerk-sign-in'
 export abstract class WidgetElement<Attrs extends object> extends HTMLElement {
   readonly #attrs: Attrs
   readonly #host: WidgetHost
-  #app: App | null = null
+  #unmount: (() => void) | null = null
 
   constructor() {
     super()
@@ -53,19 +53,37 @@ export abstract class WidgetElement<Attrs extends object> extends HTMLElement {
 
   connectedCallback(): void {
     this.#upgrade('getUserToken')
-    if (this.#app) return
+    if (this.#unmount) return
     const root = this.shadowRoot ?? this.attachShadow({ mode: 'open' })
     applyStyles(root, this.styles())
-    const mount = document.createElement('div')
-    root.append(mount)
-    this.#app = createApp(this.widget(), { attrs: this.#attrs, host: this.#host })
-    this.#app.mount(mount)
+    this.#unmount = this.mount(root, this.#attrs, this.#host)
   }
 
   disconnectedCallback(): void {
-    this.#app?.unmount()
-    this.#app = null
+    this.#unmount?.()
+    this.#unmount = null
     this.shadowRoot?.replaceChildren()
+  }
+
+  /** Puts the widget into the shadow root and returns its unmount. Default: the Vue widget. */
+  protected mount(root: ShadowRoot, attrs: Attrs, host: WidgetHost): () => void {
+    const mount = document.createElement('div')
+    root.append(mount)
+    const app = createApp(this.widget(), { attrs, host })
+    app.mount(mount)
+    return () => app.unmount()
+  }
+
+  /** Unmounts and mounts again, for example after a change of the mount mode. All state goes. */
+  protected remount(): void {
+    if (!this.#unmount) return
+    this.disconnectedCallback()
+    this.connectedCallback()
+  }
+
+  /** True while the widget is in the page. */
+  protected get mounted(): boolean {
+    return this.#unmount !== null
   }
 
   attributeChangedCallback(): void {

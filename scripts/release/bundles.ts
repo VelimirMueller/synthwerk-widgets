@@ -3,11 +3,19 @@
 // files, tests/unit/release.test.ts checks the record and the summary.
 import { createHash } from 'node:crypto'
 
-/** Every bundle `pnpm build` makes (vite.config.ts), in the order the release lists them. */
+/**
+ * Every file `pnpm build` makes for the widget host (vite.config.ts), in the order the release
+ * lists them. `script`: an embed bundle with a snippet. `page`: the chat frame page (widgets#33),
+ * which the chat bundle frames itself; it has no snippet.
+ */
 export const BUNDLES = [
-  { name: 'chat', file: 'synthwerk-chat.js' },
-  { name: 'vision', file: 'synthwerk-vision.js' }
+  { name: 'chat', file: 'synthwerk-chat.js', kind: 'script' },
+  { name: 'vision', file: 'synthwerk-vision.js', kind: 'script' },
+  { name: 'chat-frame', file: 'synthwerk-chat-frame.html', kind: 'page' }
 ] as const
+
+/** Releases before the chat frame (v0.3.0) list only the first two files. */
+export const REQUIRED_BUNDLES = 2
 
 export type BundleName = (typeof BUNDLES)[number]['name']
 
@@ -54,7 +62,12 @@ export function snippetOf(bundle: BundleRelease): string {
   return `<script type="module" src="https://<widget host>${bundle.path}" integrity="${bundle.integrity}" crossorigin="anonymous"></script>`
 }
 
-/** The GitHub job summary: path, size and integrity of every bundle, then the snippets. */
+/** True for an embed bundle (a script tag), false for the chat frame page. */
+export function isScript(bundle: BundleRelease): boolean {
+  return BUNDLES.find((b) => b.name === bundle.name)?.kind === 'script'
+}
+
+/** The GitHub job summary: path, size and integrity of every file, then the snippets. */
 export function summaryOf(release: Release): string {
   return [
     `### Embed bundles v${release.version}`,
@@ -66,7 +79,7 @@ export function summaryOf(release: Release): string {
     ),
     '',
     '```html',
-    ...release.bundles.map(snippetOf),
+    ...release.bundles.filter(isScript).map(snippetOf),
     '```',
     ''
   ].join('\n')

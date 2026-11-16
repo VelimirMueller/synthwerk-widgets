@@ -4,7 +4,7 @@ slug: chat-widget
 status: beta
 epic: E3
 owner: widgets
-paths: ["src/**", "demo/**", "vite.config.ts", "scripts/release/**", "scripts/image-smoke.sh", "releases.json", "Dockerfile", "image/**", ".github/workflows/release.yml", ".github/workflows/deploy.yml"]
+paths: ["src/**", "public/**", "demo/**", "vite.config.ts", "scripts/release/**", "scripts/image-smoke.sh", "releases.json", "Dockerfile", "image/**", ".github/workflows/release.yml", ".github/workflows/deploy.yml"]
 api: ["GET /identity/v1/apps/{appId}/widget-settings", "POST /identity/v1/apps/{appId}/widget-tokens", "GET /llm/v1/conversations", "GET /llm/v1/conversations/{id}", "POST /llm/v1/conversations", "POST /llm/v1/conversations/{id}/messages"]
 events: []
 mcp: []
@@ -21,6 +21,7 @@ updated: 2026-11-16
 > - Error, offline and quota states show. German and English.
 > - Look, language and greeting come from the studio settings of the app (widgets#34). Attributes win.
 > - Each version has its own immutable URL and an SRI hash (widgets#32). The host image exists. The URL is not live on dev yet.
+> - `mode="iframe"` runs the chat in an iframe on the widget host (widgets#33). Host page scripts cannot read the chat.
 
 ## What it does
 
@@ -51,6 +52,50 @@ updated: 2026-11-16
 - "New chat" empties the panel. The next message creates a new conversation.
 - The button is off while an answer streams. The input is off while a conversation loads.
 - The vendored SDK has no type for the list route yet. `src/history.ts` types it from the contract. Move it to the SDK client when the SDK pins contracts 0.6.0.
+
+## Iframe mode
+
+- `<synthwerk-chat mode="iframe">` shows only an iframe in its shadow root. Same script tag, same `getUserToken`.
+- The iframe loads `synthwerk-chat-frame.html` from the folder of the bundle: `/widgets/v<X.Y.Z>/` on the widget host.
+- The frame page loads the same bundle. The bundle sees `<meta name="synthwerk-frame" content="chat">` and starts the chat there.
+- The chat, its messages and its answers live only in the frame. The host page cannot read the frame (other origin).
+- The host page keeps the user token. It trades it for the widget token and loads the studio settings.
+- The host side gives the frame only the widget token, the settings, the sign-in state and the attributes.
+- The frame tells the host side only its layout, "sign in pressed" and its requests. Never a message text, an answer or a token.
+- The host side sizes the iframe: the launcher corner when closed, the panel corner when open, the full page below 640 px.
+- `mode="iframe"` sets no colour mode. The studio mode applies, else `system`.
+
+### Decision: which origin the widget token binds to
+
+| Option | Result | Reason |
+|---|---|---|
+| The host page trades. The token binds to the host page origin | yes | The app allow-list knows the host page origin. Identity needs no change. The frame gets only the short-lived widget token |
+| The frame trades with the user token. The token binds to the widget host | no | Identity would need to trust the frame for the embedding origin. The user token would enter the frame |
+| A new identity option binds the token to the widget host | no | New contract field, identity and SDK change. Same security result |
+
+- The frame calls llm from the widget host origin. llm accepts a widget token from a configured frame origin too (`SYNTHWERK_LLM_WIDGET_FRAME_ORIGINS`, synthwerk-llm#39, contracts#45).
+- The widget host is on the edge, the same origin as `/llm` (infra#32). So the frame calls llm without CORS.
+- Past chats in the frame: a same-origin `GET` has no `Origin` header. llm accepts it only with `Sec-Fetch-Site: same-origin` and frame origins set (synthwerk-llm#39).
+- The frame page CSP has `connect-src 'self'`. An `api-url` on another origin than the bundle: the frame shows "This site cannot use the chat."
+
+### Message rules (postMessage)
+
+| Side | Accepts a message only when | Posts only to |
+|---|---|---|
+| Host page | `event.source` is the iframe window and `event.origin` is the widget host origin | the widget host origin |
+| Frame | `event.source` is `window.parent` and `event.origin` is the origin in its URL (`#origin=`) | that origin |
+
+- The frame takes its parent origin from `#origin=`. Chromium and WebKit also give `location.ancestorOrigins`: it must match.
+- The frame refuses a widget token whose `synthwerk:origin` is not the parent origin. Another site cannot feed it a token for your page.
+- Unknown types, wrong fields, other origins and other windows: ignored, no answer.
+- The settings from the host side are checked again in the frame, field by field.
+
+### Limits of the isolation
+
+- The host page gives the user token. Its scripts can always trade a widget token themselves. The iframe does not hide tokens from the host page.
+- The iframe protects the chat content: host scripts (analytics, tag managers) cannot read the messages, the answers or the frame state.
+- The iframe sandbox allows scripts, its own origin, forms and new-tab links. No top navigation, no camera, no microphone.
+- Any site may frame the page (`frame-ancestors *`). Without an allow-listed origin and a user token, the frame can only show sign-in.
 
 ## Studio settings
 
@@ -83,13 +128,20 @@ updated: 2026-11-16
 
 4. Optional: listen for `synthwerk-sign-in` to start your sign-in, or set `sign-in-url`.
 5. Try it local: `pnpm demo` serves the test page at `http://127.0.0.1:4174/`. Add `?signed-in` or `?lang=de`.
+6. Iframe mode (from v0.4.0): add `mode="iframe"`. The widget host must be the edge of `api-url`. Allow it in your CSP:
+
+   ```text
+   script-src https://<widget host>; frame-src https://<widget host>; connect-src https://<edge>
+   ```
+
+   Local: `http://127.0.0.1:4174/demo/iframe.html` (the widget host is `http://localhost:4174`).
 
 | Attribute | Value | Default |
 |---|---|---|
 | `app-id` | App id from identity. Required | none: config error |
 | `api-url` | Edge base URL. Services at `/identity` and `/llm`. Required | none: config error |
 | `lang` | `de` or `en` | studio, then browser language, else `en` |
-| `mode` | `system`, `light` or `dark` | studio, else `system` |
+| `mode` | `system`, `light` or `dark`; `iframe` for iframe mode (widgets#33) | studio, else `system` |
 | `position` | `bottom-right` or `bottom-left` | studio, else `bottom-right` |
 | `theme` | `default` or `contrast` | studio, else `default` |
 | `accent` | `flagship`, `lab`, `ops` or `venture` | studio, else `flagship` |
@@ -104,7 +156,8 @@ updated: 2026-11-16
 ## Hosting and SRI
 
 - URL scheme: `https://<widget host>/widgets/v<X.Y.Z>/synthwerk-chat.js`. One path per version. The bytes behind a path never change.
-- `pnpm build && node scripts/release/sri.ts` writes `dist/release.json` and `dist/release-notes.md`. `release.json` holds the version, then path, size and `sha384` integrity of each bundle (`chat`, `vision`). CI puts both in the build job summary (widgets#39).
+- `pnpm build && node scripts/release/sri.ts` writes `dist/release.json` and `dist/release-notes.md`. `release.json` holds the version, then path, size and `sha384` integrity of each file (`chat`, `vision`, `chat-frame`). CI puts both in the build job summary (widgets#39).
+- `releases.json` entries before v0.4.0 list only `chat` and `vision`. The image check accepts both forms.
 - The build is reproducible: the same commit gives the same hash. The CI smoke test proves it: the image build and the runner build give the same bytes.
 - Snippet with SRI:
 
@@ -138,7 +191,8 @@ updated: 2026-11-16
 |---|---|
 | Image | `ghcr.io/velimirmueller/synthwerk-widgets:<sha>`, from `deploy.yml` on `develop` only |
 | Server | unprivileged nginx, uid 101, port 8080 (`image/nginx.conf`) |
-| Paths | `/widgets/v<X.Y.Z>/synthwerk-chat.js`, `/widgets/v<X.Y.Z>/synthwerk-vision.js`, `/healthz`. Every other path: 404 |
+| Paths | `/widgets/v<X.Y.Z>/synthwerk-chat.js`, `/widgets/v<X.Y.Z>/synthwerk-vision.js`, `/widgets/v<X.Y.Z>/synthwerk-chat-frame.html` (from v0.4.0), `/healthz`. Every other path: 404 |
+| Frame page | `text/html`, CSP `default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors *`, `Referrer-Policy: no-referrer`, no CORS header |
 | Methods | GET and HEAD. Other methods: 403 |
 | A 404 | no cache header |
 | Compression | gzip for clients that ask. SRI checks the decoded bytes |
@@ -164,7 +218,7 @@ updated: 2026-11-16
 | Settings request | one per app and API per page load, 3 s timeout, no retry |
 | Greeting | plain text, 280 characters at most |
 | Raw HTML in model output | shown as text |
-| Bundle | one ES module, about 125 kB (42 kB gzip) |
+| Bundle | one ES module, about 135 kB (45 kB gzip) |
 
 ## Events
 
@@ -206,7 +260,16 @@ updated: 2026-11-16
 - `tests/e2e/chat.spec.ts` — `signed-out visitor - sign-in prompt, only the public settings request`
 - `tests/unit/lock.test.ts` — `verifyBundle - the recorded bytes pass, other bytes fail`
 - `tests/unit/lock.test.ts` — `release notes - the summary, then the releases.json entry that parses back`
-- `scripts/image-smoke.sh` — host headers, same bytes as the CI build, 404 without a cache header, POST 403
+- `scripts/image-smoke.sh` — host headers, same bytes as the CI build, 404 without a cache header, POST 403; frame page CSP
+- `tests/e2e/chat-iframe.spec.ts` — `iframe mode - the chat runs in a frame on the widget host and streams the answer`
+- `tests/e2e/chat-iframe.spec.ts` — `host page script - cannot read the messages or the widget token of the frame`
+- `tests/e2e/chat-iframe.spec.ts` — `a message from an unknown source - ignored by the host side`
+- `tests/e2e/chat-iframe.spec.ts` — `a token bound to another page - the frame refuses it, llm gets no call`
+- `tests/e2e/chat-iframe.spec.ts` — `signed-out visitor - the sign-in button in the frame reaches the host page`
+- `tests/e2e/chat-iframe.spec.ts` — `past chats in the frame - a same-origin GET with the widget token and no Origin header`
+- `tests/unit/frame.test.ts` — `messages from another origin or another window - ignored` (frame side and host side)
+- `tests/unit/frame.test.ts` — `token request - the parent trades the user token, the frame gets only the widget token`
+- `tests/unit/lock.test.ts` — `a release before the chat frame (v0.3.0) - chat and vision only, parsed (widgets#33)`
 
 - `tests/unit/history.test.ts` — `first page - GET /v1/conversations with the page size, no cursor`; `next page - sends the cursor`; `401 - throws a SynthwerkError with code unauthenticated`; `open - shows the stored messages and the next message continues that conversation`; `open - another user’s or another site’s id (404) - no messages, error, the next message makes a new conversation`; `reset - empties the chat and the next message makes a new conversation`; `reset while a conversation loads - the late answer is dropped`
 - `tests/e2e/chat.spec.ts` — `past conversations - the user lists them, opens one and continues it`; `past conversations - a conversation llm refuses (404) shows no message`; `past conversations - new chat empties the panel`
@@ -223,3 +286,4 @@ updated: 2026-11-16
 | 2026-11-16 | The sign-in state uses the SDK `createWidgetSession` (synthwerk-sdk 0.3.0). The local session logic is gone. Same cache, trade and reset rules. No change for hosts (synthwerk#52). |
 | 2026-11-16 | Widget host image (widgets#32): nginx serves every version in `releases.json` under `/widgets/v<X.Y.Z>/` with the host headers. `release.yml` makes the GitHub Release with the SRI hashes in the notes. `deploy.yml` publishes the image. Repo tier `deploys`. Version 0.3.0. No change for hosts. |
 | 2026-11-16 | Past conversations (synthwerk#54): a "Past chats" list of this site, open and continue one, "New chat". New llm calls `GET /v1/conversations` and `GET /v1/conversations/{id}`. No change for hosts. |
+| 2026-11-16 | Iframe mode (widgets#33): `mode="iframe"` runs the chat in `synthwerk-chat-frame.html` on the widget host. The host page trades the token and talks to the frame by checked postMessage. The release and the host image carry the frame page. Version 0.4.0. |

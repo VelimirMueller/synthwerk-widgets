@@ -26,6 +26,8 @@ export default defineConfig(({ command, mode }) => {
       sourcemap: true,
       // `pnpm build` runs both: the chat build empties dist/, the vision build adds its file.
       emptyOutDir: mode !== 'vision',
+      // public/ holds the chat frame page (widgets#33). Only the chat build copies it.
+      copyPublicDir: mode !== 'vision',
       lib: {
         entry: bundle.entry,
         formats: ['es'],

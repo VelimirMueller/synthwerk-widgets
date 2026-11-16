@@ -84,6 +84,7 @@ jobs:
           path: |
             dist/synthwerk-chat.js
             dist/synthwerk-vision.js
+            dist/synthwerk-chat-frame.html
             dist/release.json
             dist/release-notes.md
           retention-days: 7
@@ -118,4 +119,5 @@ jobs:
           # The full SHA: gh refuses a short SHA as target-commitish.
           gh release create "v$VERSION" --repo "$REPOSITORY" --target "$SHA" \
             --title "v$VERSION" --notes-file release/release-notes.md \
-            release/synthwerk-chat.js release/synthwerk-vision.js release/release.json
+            release/synthwerk-chat.js release/synthwerk-vision.js \
+            release/synthwerk-chat-frame.html release/release.json

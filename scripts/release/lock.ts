@@ -2,7 +2,13 @@
 // size and integrity of each bundle. The host image serves exactly these versions, and its build
 // checks each downloaded release asset against this record. Pure functions: fetch.ts does the I/O,
 // tests/unit/lock.test.ts checks them.
-import { BUNDLES, type BundleRelease, integrityOf, type Release } from './bundles.ts'
+import {
+  BUNDLES,
+  type BundleRelease,
+  integrityOf,
+  REQUIRED_BUNDLES,
+  type Release
+} from './bundles.ts'
 
 /** Store of record: the GitHub Release of tag v<version> holds the bundle files. */
 export const RELEASE_BASE = 'https://github.com/VelimirMueller/synthwerk-widgets/releases/download'
@@ -24,12 +30,19 @@ export function parseLock(text: string): Release[] {
     }
     if (seen.has(version)) throw new Error(`${where}: version ${version} is listed twice`)
     seen.add(version)
-    if (!Array.isArray(bundles) || bundles.length !== BUNDLES.length) {
-      throw new Error(`${where}: v${version} must list ${BUNDLES.length} bundles`)
+    // Older releases have no chat frame page: they list the first REQUIRED_BUNDLES files only.
+    if (
+      !Array.isArray(bundles) ||
+      bundles.length < REQUIRED_BUNDLES ||
+      bundles.length > BUNDLES.length
+    ) {
+      throw new Error(
+        `${where}: v${version} must list ${REQUIRED_BUNDLES} to ${BUNDLES.length} bundles, the first ones of ${BUNDLES.map((b) => b.name).join(', ')} in this order`
+      )
     }
     return {
       version,
-      bundles: BUNDLES.map(({ name, file }, j): BundleRelease => {
+      bundles: BUNDLES.slice(0, bundles.length).map(({ name, file }, j): BundleRelease => {
         const b: unknown = bundles[j]
         if (!isRecord(b) || b.name !== name || b.file !== file) {
           throw new Error(`${where}: bundle ${j} of v${version} must be ${name} (${file})`)

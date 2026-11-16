@@ -365,8 +365,10 @@
 }
 
 /* Below 640 px: the panel is a full-screen sheet; the close button sits in its header. */
+/* In the chat frame (widgets#33) the parent says which layout fits: "card" keeps the panel
+   above the launcher, although the iframe is narrower than 640 px. */
 @media (max-width: 639.98px) {
-  .sw-panel {
+  .sw-root:not([data-frame="card"]) .sw-panel {
     inset: 0;
     width: 100%;
     height: 100%;
@@ -374,7 +376,7 @@
     border-radius: 0;
   }
 
-  .sw-root--open .sw-launcher {
+  .sw-root--open:not([data-frame="card"]) .sw-launcher {
     display: none;
   }
 }

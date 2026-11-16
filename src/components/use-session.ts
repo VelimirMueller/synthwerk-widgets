@@ -16,6 +16,7 @@ import {
   watch
 } from 'vue'
 import { type GetUserToken, userToken } from '../session.ts'
+import type { StudioSettings } from '../settings.ts'
 
 /** What the element hands to the widget. `version` changes when the host session may have changed. */
 export interface WidgetHost {
@@ -25,6 +26,17 @@ export interface WidgetHost {
   languages: readonly string[]
   requestSignIn: () => void
   fetch?: (input: Request) => Promise<Response>
+  // The chat frame (widgets#33) replaces the host token hook with these. Unset: the hook.
+  /** The sign-in state without a token. A rejection (no answer from the host page) counts as signed out. */
+  signedIn?: () => Promise<boolean>
+  /** Makes the session. Default: SDK `createWidgetSession` with `getUserToken`. */
+  createSession?: (config: SessionConfig) => WidgetSession
+  /** The studio settings. Default: `loadSettings` from identity. */
+  loadSettings?: () => Promise<StudioSettings>
+  /** Gets the layout on each change: the parent sizes the iframe. */
+  onLayout?: (layout: { open: boolean; position: string; ready: boolean }) => void
+  /** Frame layout: `card` (panel above the launcher) or `sheet` (full frame). Unset: no frame. */
+  frame?: 'card' | 'sheet'
 }
 
 export type AuthState = 'unknown' | 'checking' | 'signed_in' | 'signed_out'
@@ -78,21 +90,25 @@ export function useSession(
     const mine = ++run
     if (!configured.value) return
     auth.value = 'checking'
-    const token = await userToken(props.host.getUserToken)
+    const signedIn = props.host.signedIn
+      ? await props.host.signedIn().catch(() => false)
+      : (await userToken(props.host.getUserToken)) !== null
     if (mine !== run) return
-    if (!token) {
+    if (!signedIn) {
       drop()
       auth.value = 'signed_out'
       return
     }
     auth.value = 'signed_in'
     if (!session.value) {
-      const created = createWidgetSession({
-        appId: props.config().appId,
-        apiUrl: props.config().apiUrl,
-        getUserToken: () => props.host.getUserToken?.() ?? null,
-        ...(props.host.fetch ? { fetch: props.host.fetch } : {})
-      })
+      const created = props.host.createSession
+        ? props.host.createSession(props.config())
+        : createWidgetSession({
+            appId: props.config().appId,
+            apiUrl: props.config().apiUrl,
+            getUserToken: () => props.host.getUserToken?.() ?? null,
+            ...(props.host.fetch ? { fetch: props.host.fetch } : {})
+          })
       session.value = created
       hooks.onStart(created)
     }

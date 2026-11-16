@@ -75,6 +75,7 @@ updated: 2026-11-16
 
 - The frame calls llm from the widget host origin. llm accepts a widget token from a configured frame origin too (`SYNTHWERK_LLM_WIDGET_FRAME_ORIGINS`, synthwerk-llm#39, contracts#45).
 - The widget host is on the edge, the same origin as `/llm` (infra#32). So the frame calls llm without CORS.
+- Past chats in the frame: a same-origin `GET` has no `Origin` header. llm accepts it only with `Sec-Fetch-Site: same-origin` and frame origins set (synthwerk-llm#39).
 - The frame page CSP has `connect-src 'self'`. An `api-url` on another origin than the bundle: the frame shows "This site cannot use the chat."
 
 ### Message rules (postMessage)
@@ -265,6 +266,7 @@ updated: 2026-11-16
 - `tests/e2e/chat-iframe.spec.ts` — `a message from an unknown source - ignored by the host side`
 - `tests/e2e/chat-iframe.spec.ts` — `a token bound to another page - the frame refuses it, llm gets no call`
 - `tests/e2e/chat-iframe.spec.ts` — `signed-out visitor - the sign-in button in the frame reaches the host page`
+- `tests/e2e/chat-iframe.spec.ts` — `past chats in the frame - a same-origin GET with the widget token and no Origin header`
 - `tests/unit/frame.test.ts` — `messages from another origin or another window - ignored` (frame side and host side)
 - `tests/unit/frame.test.ts` — `token request - the parent trades the user token, the frame gets only the widget token`
 - `tests/unit/lock.test.ts` — `a release before the chat frame (v0.3.0) - chat and vision only, parsed (widgets#33)`

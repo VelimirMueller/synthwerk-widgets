@@ -281,3 +281,42 @@ test('iframe mode below 640 px - the open frame fills the page', async ({ page }
     .poll(async () => page.locator('synthwerk-chat iframe').boundingBox())
     .toEqual({ x: 0, y: 0, width: 390, height: 780 })
 })
+
+test('past chats in the frame - a same-origin GET with the widget token and no Origin header', async ({
+  page
+}) => {
+  const seen = await backend(page)
+  const gets: Record<string, string>[] = []
+  // A same-origin GET carries no Origin header. llm accepts a widget token without Origin only
+  // with `Sec-Fetch-Site: same-origin` (synthwerk-llm#39). The browser adds that header in the
+  // network stack, after this route, so this test cannot see it.
+  await page.route(
+    (url) => url.pathname === '/api/llm/v1/conversations' && url.searchParams.has('limit'),
+    async (route) => {
+      gets.push(await route.request().allHeaders())
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: [
+            {
+              id: CONVERSATION,
+              model: 'default',
+              title: 'Opening hours',
+              created_at: '2026-11-16T09:00:00Z'
+            }
+          ]
+        })
+      })
+    }
+  )
+  await page.goto('/demo/iframe.html?signed-in')
+  const frame = await open(page)
+  await frame.getByRole('button', { name: 'Past chats' }).click()
+  await expect(
+    frame.getByRole('list', { name: 'Past chats' }).getByRole('button', { name: /Opening hours/ })
+  ).toBeVisible()
+  expect(gets).toHaveLength(1)
+  expect(gets[0]?.origin).toBeUndefined()
+  expect(gets[0]?.authorization).toBe(`Bearer ${TOKEN}`)
+  expect(seen.problems).toEqual([])
+})

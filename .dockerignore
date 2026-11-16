@@ -1,0 +1,14 @@
+# Allow-list: the image build reads only these paths (Dockerfile).
+*
+!Dockerfile
+!image/
+!releases.json
+!scripts/release/
+# The source stage (SOURCE=source, test images only) builds the bundles from the source.
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.json
+!vite.config.ts
+!src/
+!vendor/

@@ -1,0 +1,121 @@
+# Publish the embed bundles of package.json "version" as the GitHub Release v<version>: the store
+# of record of the widget host (widgets#32, docs/features/chat-widget.md). Start it by hand:
+#   gh workflow run release.yml --ref main
+# Only main: widget PRs merge into main, and develop is brought up to main after the merge. When
+# the repo moves to develop-first promotion (fleet-standard#9), the release ref moves with it.
+# check builds the bundles, writes release.json and the notes (scripts/release/sri.ts), and refuses
+# a version whose tag exists: the bytes behind a versioned URL never change. publish makes the tag
+# at the checked SHA and the release with both bundles, release.json and the SRI hashes in the
+# notes. The host serves the version after a PR adds the entry from the notes to releases.json.
+name: release
+run-name: release · ${{ github.ref_name }} · ${{ github.sha }}
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: release-widgets
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Refuse any ref but main
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::release runs only on main, not $REF"; exit 1; }
+
+      - name: Check out the source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install the dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Read the version
+        id: version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version $version is not X.Y.Z"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse a version that is already released
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SERVER: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if git ls-remote --exit-code --tags "$SERVER/$REPOSITORY.git" "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::tag v$VERSION exists: bump the version in package.json for new bytes"
+            exit 1
+          fi
+
+      - name: Build the bundles and the release notes
+        run: pnpm run build && node scripts/release/sri.ts
+
+      - name: Upload the release files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            dist/synthwerk-chat.js
+            dist/synthwerk-vision.js
+            dist/release.json
+            dist/release-notes.md
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    needs: check
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Download the release files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-${{ github.sha }}
+          path: release
+
+      - name: Create the tag and the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          # Again here: a tag made after the check would get this release on its own commit.
+          if git ls-remote --exit-code --tags "https://github.com/$REPOSITORY.git" "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::tag v$VERSION exists"
+            exit 1
+          fi
+          # The full SHA: gh refuses a short SHA as target-commitish.
+          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$SHA" \
+            --title "v$VERSION" --notes-file release/release-notes.md \
+            release/synthwerk-chat.js release/synthwerk-vision.js release/release.json

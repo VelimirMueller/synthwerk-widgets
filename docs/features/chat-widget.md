@@ -4,11 +4,11 @@ slug: chat-widget
 status: beta
 epic: E3
 owner: widgets
-paths: ["src/**", "demo/**", "vite.config.ts", "scripts/release/**"]
+paths: ["src/**", "demo/**", "vite.config.ts", "scripts/release/**", "scripts/image-smoke.sh", "releases.json", "Dockerfile", "image/**", ".github/workflows/release.yml", ".github/workflows/deploy.yml"]
 api: ["GET /identity/v1/apps/{appId}/widget-settings", "POST /identity/v1/apps/{appId}/widget-tokens", "POST /llm/v1/conversations", "POST /llm/v1/conversations/{id}/messages"]
 events: []
 mcp: []
-updated: 2026-10-30
+updated: 2026-11-16
 ---
 
 # Embeddable chat widget
@@ -19,7 +19,7 @@ updated: 2026-10-30
 > - Signed-out visitors see a sign-in prompt. The widget sends only the public settings request.
 > - Error, offline and quota states show. German and English.
 > - Look, language and greeting come from the studio settings of the app (widgets#34). Attributes win.
-> - Each version has its own immutable URL and an SRI hash (widgets#32). The host is not live yet.
+> - Each version has its own immutable URL and an SRI hash (widgets#32). The host image exists. The URL is not live on dev yet.
 
 ## What it does
 
@@ -57,7 +57,7 @@ updated: 2026-10-30
 2. Add the snippet to the page:
 
    ```html
-   <script type="module" src="https://<widget host>/widgets/v0.2.0/synthwerk-chat.js"></script>
+   <script type="module" src="https://<widget host>/widgets/v0.3.0/synthwerk-chat.js"></script>
    <synthwerk-chat app-id="<app id>" api-url="https://<edge>"></synthwerk-chat>
    ```
 
@@ -91,16 +91,16 @@ updated: 2026-10-30
 ## Hosting and SRI
 
 - URL scheme: `https://<widget host>/widgets/v<X.Y.Z>/synthwerk-chat.js`. One path per version. The bytes behind a path never change.
-- `pnpm build && node scripts/release/sri.ts` writes `dist/release.json`: the version, then path, size and `sha384` integrity of each bundle (`chat`, `vision`). CI puts both in the build job summary (widgets#39).
-- The build is reproducible: the same commit gives the same hash.
+- `pnpm build && node scripts/release/sri.ts` writes `dist/release.json` and `dist/release-notes.md`. `release.json` holds the version, then path, size and `sha384` integrity of each bundle (`chat`, `vision`). CI puts both in the build job summary (widgets#39).
+- The build is reproducible: the same commit gives the same hash. The CI smoke test proves it: the image build and the runner build give the same bytes.
 - Snippet with SRI:
 
   ```html
-  <script type="module" src="https://<widget host>/widgets/v0.2.0/synthwerk-chat.js"
+  <script type="module" src="https://<widget host>/widgets/v0.3.0/synthwerk-chat.js"
           integrity="sha384-…" crossorigin="anonymous"></script>
   ```
 
-- The host must send: `Content-Type: text/javascript`, `Cache-Control: public, max-age=31536000, immutable`, `Access-Control-Allow-Origin: *`, `Cross-Origin-Resource-Policy: cross-origin`, `X-Content-Type-Options: nosniff`. A module script with `integrity` needs the CORS header.
+- The host sends: `Content-Type: text/javascript`, `Cache-Control: public, max-age=31536000, immutable`, `Access-Control-Allow-Origin: *`, `Cross-Origin-Resource-Policy: cross-origin`, `X-Content-Type-Options: nosniff`. A module script with `integrity` needs the CORS header.
 
 ### Decision: the edge on the IONOS VPS
 
@@ -111,15 +111,33 @@ updated: 2026-10-30
 | jsDelivr from npm or a GitHub tag | not now | New vendor (third-party.md needs a line first). npm needs a publish identity (fleet GOV-ENV-10) |
 | Edge on the IONOS VPS, versioned path from an image | yes | Provider in use. Same edge as `/identity` and `/llm`. Own headers |
 
-- Store of record: one GitHub Release per tag `vX.Y.Z`, with `synthwerk-chat.js`, `synthwerk-vision.js`, `release.json` and both integrity values in the notes.
-- Serving: a small static image (unprivileged nginx) under `/widgets/` on the edge. It holds every released version. The build of the image fetches each release asset and checks it against its recorded integrity.
+### How a version goes live
 
-### Open before the URL is live
+1. Set the new version in `package.json`. Merge.
+2. Run `gh workflow run release.yml --ref main`. The workflow refuses a version whose tag exists. It makes the tag `v<X.Y.Z>` and the GitHub Release: both bundles, `release.json`, and the SRI hashes in the notes.
+3. Copy the `releases.json` entry from the release notes into `releases.json`. Merge. This list is the lock of the host: it serves these versions only.
+4. Bring `develop` up to `main`. Run `gh workflow run deploy.yml --ref develop`. The image build downloads each listed bundle from its release. A wrong size or hash stops the build.
+5. Pin the new image digest in synthwerk-infra (`compose.yaml`, service `widgets`).
 
-- The edge (Traefik and the WAF) is not on the VPS yet. Today only SSH is public (synthwerk-infra).
-- The repo moves from tier `library` to `deploys`: `deploy.yml`, `promote.yml`, a `dev` environment with `DEPLOY_ENV`, `fleet check` (fleet-standard templates).
-- A release step that makes the GitHub Release from CI needs a workflow-name exception (WF-FILE-02) or a fleet release stage.
-- Then: a route `PathPrefix(/widgets/)` in synthwerk-infra, a check from another origin on dev, and `NUXT_PUBLIC_WIDGET_SCRIPT_URL` plus `NUXT_PUBLIC_WIDGET_SCRIPT_INTEGRITY` in the studio.
+### The host image
+
+| Rule | Value |
+|---|---|
+| Image | `ghcr.io/velimirmueller/synthwerk-widgets:<sha>`, from `deploy.yml` on `develop` only |
+| Server | unprivileged nginx, uid 101, port 8080 (`image/nginx.conf`) |
+| Paths | `/widgets/v<X.Y.Z>/synthwerk-chat.js`, `/widgets/v<X.Y.Z>/synthwerk-vision.js`, `/healthz`. Every other path: 404 |
+| Methods | GET and HEAD. Other methods: 403 |
+| A 404 | no cache header |
+| Compression | gzip for clients that ask. SRI checks the decoded bytes |
+| Runtime | read-only root, no capabilities, no network. Only `/tmp` is writable |
+| Test image | `docker build --build-arg SOURCE=source .` also serves the local build under its version. CI uses it (`scripts/image-smoke.sh`). Never published |
+
+### Open before the URL is live on dev
+
+- The edge (Traefik and the WAF) is not on the VPS yet. Today only SSH is public. synthwerk-infra has the `/widgets/` route, but no deploy path to the host.
+- The widget host needs a public name and a TLS certificate.
+- No version is released yet: `releases.json` is empty. Steps 2 to 5 above make v0.3.0 live.
+- Then: a check from another origin on dev, and `NUXT_PUBLIC_WIDGET_SCRIPT_URL` plus `NUXT_PUBLIC_WIDGET_SCRIPT_INTEGRITY` in the studio.
 
 ## Rules and limits
 
@@ -132,7 +150,7 @@ updated: 2026-10-30
 | Settings request | one per app and API per page load, 3 s timeout, no retry |
 | Greeting | plain text, 280 characters at most |
 | Raw HTML in model output | shown as text |
-| Bundle | one ES module, about 120 kB (40 kB gzip) |
+| Bundle | one ES module, about 125 kB (42 kB gzip) |
 
 ## Events
 
@@ -172,6 +190,9 @@ updated: 2026-10-30
 - `tests/unit/chat.test.ts` — `answer - streams into the assistant message piece by piece`
 - `tests/e2e/chat.spec.ts` — `signed-in user - chats and sees the streamed answer` (strict CSP page)
 - `tests/e2e/chat.spec.ts` — `signed-out visitor - sign-in prompt, only the public settings request`
+- `tests/unit/lock.test.ts` — `verifyBundle - the recorded bytes pass, other bytes fail`
+- `tests/unit/lock.test.ts` — `release notes - the summary, then the releases.json entry that parses back`
+- `scripts/image-smoke.sh` — host headers, same bytes as the CI build, 404 without a cache header, POST 403
 
 ## Changes
 
@@ -183,3 +204,4 @@ updated: 2026-10-30
 | 2026-10-30 | The widget-token trade goes through the SDK `requestWidgetToken` (synthwerk-sdk#18). Same request, same session rules. No change for hosts. |
 | 2026-10-30 | `release.json` lists both bundles (widgets#39). The not-allowed state shows in a real browser: identity answers the token trade preflight for every origin and makes its 403 `origin_not_allowed` readable (widgets#41). No change for hosts. |
 | 2026-11-16 | The sign-in state uses the SDK `createWidgetSession` (synthwerk-sdk 0.3.0). The local session logic is gone. Same cache, trade and reset rules. No change for hosts (synthwerk#52). |
+| 2026-11-16 | Widget host image (widgets#32): nginx serves every version in `releases.json` under `/widgets/v<X.Y.Z>/` with the host headers. `release.yml` makes the GitHub Release with the SRI hashes in the notes. `deploy.yml` publishes the image. Repo tier `deploys`. Version 0.3.0. No change for hosts. |

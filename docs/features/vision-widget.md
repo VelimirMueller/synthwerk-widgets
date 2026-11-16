@@ -8,7 +8,7 @@ paths: ["src/vision/**", "src/vision-element.ts", "src/vision-entry.ts", "src/co
 api: ["POST /identity/v1/apps/{appId}/widget-tokens", "POST /vision/v1/classifications", "POST /vision/v1/images"]
 events: []
 mcp: []
-updated: 2026-10-30
+updated: 2026-11-16
 ---
 
 # Embeddable vision widget
@@ -46,12 +46,12 @@ updated: 2026-10-30
 2. Add the snippet to the page:
 
    ```html
-   <script type="module" src="https://<widget host>/widgets/v0.2.0/synthwerk-vision.js"
+   <script type="module" src="https://<widget host>/widgets/v0.3.0/synthwerk-vision.js"
            integrity="sha384-…" crossorigin="anonymous"></script>
    <synthwerk-vision app-id="<app id>" api-url="https://<edge>"></synthwerk-vision>
    ```
 
-   Take `integrity` from `release.json` or the release notes of that version. Same URL scheme and host headers as the [chat bundle](chat-widget.md#hosting-and-sri).
+   Take `integrity` from `release.json` or the GitHub Release notes of that version. Same URL scheme and host headers as the [chat bundle](chat-widget.md#hosting-and-sri).
 
 3. After sign-in, hand in the user token. Set it again after sign-out:
 
@@ -157,3 +157,4 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 | 2026-10-30 | First version (synthwerk#43). |
 | 2026-10-30 | Calls go through the SDK vision client and its generated types (synthwerk-sdk#19). No change for hosts. |
 | 2026-10-30 | Vision bundle in `release.json` with SRI, snippet with `integrity` (widgets#39). Not-allowed state readable in a real browser (widgets#41). Decision on the PWA page (widgets#38). |
+| 2026-11-16 | The widget host image serves this bundle next to the chat bundle (widgets#32). Version 0.3.0. No change for hosts. |

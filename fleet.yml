@@ -1,12 +1,25 @@
 # fleet.yml: tier and visibility of this repo (STANDARD.md). Exceptions: docs/rollout.md.
-# Tier library since synthwerk#34: the embed bundle is built and packed, not deployed yet.
-# It moves to deploys when the bundle gets a host (CDN or edge route).
-tier: library
+# Tier deploys since widgets#32: deploy.yml publishes the widget host image (every released bundle
+# under /widgets/v<X.Y.Z>/), synthwerk-infra serves it on the edge. Before: library (synthwerk#34).
+tier: deploys
 visibility: public
+
 exceptions:
   - rule: WF-FILE-02
     value: [feature-doc.yml]
     reason: The feature-doc check (synthwerk D-16) fails a PR that changes widget source without its docs/features page, and the template has no such stage.
-  - rule: GOV-ENV-10
-    value: no release environment
-    reason: The widget bundle is not published to npm or a CDN yet, so no publish identity exists.
+  - rule: GOV-REPO-01
+    value: default-branch-main
+    reason: The default branch stays main until the control repo switches it to develop (fleet-standard#9).
+  - rule: GOV-RS-02
+    value: not-created-yet
+    reason: develop exists but has no ruleset yet; the control repo creates it (fleet-standard#9).
+  - rule: GOV-RS-03
+    value: not-created-yet
+    reason: develop exists but has no ruleset yet; the control repo creates it (fleet-standard#9).
+  - rule: GOV-RS-04
+    value: not-created-yet
+    reason: stage does not exist yet, and main has the older ruleset protected_main; the control repo creates both (fleet-standard#9).
+  - rule: GOV-ENV-01
+    value: not-created-yet
+    reason: The environments dev, stg and prd do not exist yet; the control repo creates them (fleet-standard#9).

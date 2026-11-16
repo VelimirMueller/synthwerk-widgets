@@ -46,4 +46,5 @@ USER 101
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
 # Start nginx directly: the entrypoint scripts of the base image edit files in /etc/nginx.
+# Supported run mode: read-only root, uid 101, tmpfs /tmp (synthwerk-infra compose.yaml).
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

@@ -49,7 +49,9 @@ for (const release of released) {
 let served = released.length
 if (values.dist) {
   const dist = values.dist
-  const local = JSON.parse(await readFile(join(dist, 'release.json'), 'utf8')) as Release
+  // Same checks as a releases.json entry: version, both bundles, paths, sizes, integrity.
+  const [local] = parseLock(`[${await readFile(join(dist, 'release.json'), 'utf8')}]`)
+  if (!local) throw new Error('dist/release.json is empty')
   if (released.some((r) => r.version === local.version)) {
     console.log(`v${local.version} is released: the image serves the release asset, not dist/`)
   } else {

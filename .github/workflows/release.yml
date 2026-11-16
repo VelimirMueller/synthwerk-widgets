@@ -1,6 +1,8 @@
 # Publish the embed bundles of package.json "version" as the GitHub Release v<version>: the store
 # of record of the widget host (widgets#32, docs/features/chat-widget.md). Start it by hand:
 #   gh workflow run release.yml --ref main
+# Only main: widget PRs merge into main, and develop is brought up to main after the merge. When
+# the repo moves to develop-first promotion (fleet-standard#9), the release ref moves with it.
 # check builds the bundles, writes release.json and the notes (scripts/release/sri.ts), and refuses
 # a version whose tag exists: the bytes behind a versioned URL never change. publish makes the tag
 # at the checked SHA and the release with both bundles, release.json and the SRI hashes in the
@@ -31,14 +33,11 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Refuse any ref but main or develop
+      - name: Refuse any ref but main
         env:
           REF: ${{ github.ref }}
         run: |
-          case "$REF" in
-            refs/heads/main|refs/heads/develop) ;;
-            *) echo "::error::release runs only on main or develop, not $REF"; exit 1 ;;
-          esac
+          [ "$REF" = "refs/heads/main" ] || { echo "::error::release runs only on main, not $REF"; exit 1; }
 
       - name: Check out the source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -16,6 +16,8 @@ trap 'docker rm -f "$name" >/dev/null 2>&1 || true; rm -rf "$tmp"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
+[ -f dist/release.json ] || fail "dist/release.json is missing: run pnpm build && node scripts/release/sri.ts first"
+
 docker build --build-arg SOURCE=source --build-arg COMMIT="$(git rev-parse HEAD)" -t "$image" .
 docker run -d --name "$name" --read-only --cap-drop ALL --security-opt no-new-privileges:true \
   --tmpfs /tmp -p "127.0.0.1:$port:8080" "$image" >/dev/null

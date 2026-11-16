@@ -57,6 +57,8 @@ export function createChat(options: ChatOptions): Chat {
   let controller: AbortController | null = null
   let nextId = 1
   let loading = 0
+  /** Counts clear(): a send or a create of an older chat never writes into a newer one. */
+  let generation = 0
 
   /** Stored message status (contract MessageStatus) to the view state. */
   function viewState(status: string): MessageState {
@@ -66,6 +68,7 @@ export function createChat(options: ChatOptions): Chat {
   }
 
   function clear(): void {
+    generation++
     controller?.abort()
     controller = null
     conversationId = null
@@ -106,11 +109,13 @@ export function createChat(options: ChatOptions): Chat {
 
   async function conversation(): Promise<string> {
     if (conversationId) return conversationId
+    const mine = generation
     const { data, error, response } = await options.sw.api.llm.POST('/v1/conversations', {
       body: {}
     })
     if (!data) throw problemError(error, response)
-    conversationId = data.id
+    // A reset meanwhile: the new chat must not adopt this conversation.
+    if (mine === generation) conversationId = data.id
     return data.id
   }
 
@@ -127,9 +132,14 @@ export function createChat(options: ChatOptions): Chat {
     state.streaming = true
     const current = new AbortController()
     controller = current
+    const mine = generation
+    /** False once open() or reset() replaced this chat: then write nothing more. */
+    const live = () => mine === generation
     let started = false
     try {
       const id = await conversation()
+      // Stopped, opened or reset while the conversation was created: no model call.
+      if (current.signal.aborted) throw new DOMException('aborted', 'AbortError')
       for await (const event of options.sw.llm.chat(
         { conversationId: id, content: text },
         { signal: current.signal }
@@ -139,31 +149,30 @@ export function createChat(options: ChatOptions): Chat {
         else if (event.type === 'done') answer.state = 'done'
         else if (event.type === 'error') {
           answer.state = 'error'
-          state.error = classify(event.error, now())
+          if (live()) state.error = classify(event.error, now())
         }
       }
       if (answer.state === 'streaming') answer.state = current.signal.aborted ? 'stopped' : 'done'
       // A finished answer without any text: say so, do not leave the question unanswered.
-      if (answer.state === 'done' && answer.text === '') state.error = { kind: 'generic' }
+      if (answer.state === 'done' && answer.text === '' && live()) state.error = { kind: 'generic' }
     } catch (error) {
       if (current.signal.aborted) {
         answer.state = 'stopped'
       } else {
         answer.state = 'error'
-        state.error = classify(error, now())
-        if (!started) {
-          // Nothing reached the model: the message goes back to the input, not into the list.
-          const at = state.messages.indexOf(question)
-          if (at >= 0) state.messages.splice(at, 1)
-          state.failedText = text
+        if (live()) {
+          state.error = classify(error, now())
+          if (!started) {
+            // Nothing reached the model: the message goes back to the input, not into the list.
+            state.messages.splice(state.messages.indexOf(question), 1)
+            state.failedText = text
+          }
         }
       }
     } finally {
       // No text came: drop the empty answer bubble, the error banner tells the rest.
-      // open() or reset() may have replaced the list meanwhile: touch only our own rows.
-      const at = state.messages.indexOf(answer)
-      if (at >= 0 && answer.text === '' && answer.state !== 'streaming') {
-        state.messages.splice(at, 1)
+      if (live() && answer.text === '' && answer.state !== 'streaming') {
+        state.messages.splice(state.messages.indexOf(answer), 1)
       }
       if (controller === current) {
         controller = null

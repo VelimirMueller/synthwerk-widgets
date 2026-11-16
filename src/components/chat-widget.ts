@@ -53,10 +53,19 @@ interface HistoryState {
   error: WidgetError | null
   /** At least one load ended. */
   loaded: boolean
+  /** The failed load was "Show more": retry loads that page again, the list stays. */
+  failedMore: boolean
 }
 
 function emptyHistory(): HistoryState {
-  return { items: [], next: undefined, loading: false, error: null, loaded: false }
+  return {
+    items: [],
+    next: undefined,
+    loading: false,
+    error: null,
+    loaded: false,
+    failedMore: false
+  }
 }
 
 export const ChatWidget = defineComponent(
@@ -122,11 +131,18 @@ export const ChatWidget = defineComponent(
           next: page.next_cursor,
           loading: false,
           error: null,
-          loaded: true
+          loaded: true,
+          failedMore: false
         }
       } catch (error) {
         if (run !== historyRun) return
-        history.value = { ...before, loading: false, error: classify(error), loaded: true }
+        history.value = {
+          ...before,
+          loading: false,
+          error: classify(error),
+          loaded: true,
+          failedMore: more
+        }
         if (history.value.error?.kind === 'signed_out') signOut()
       }
     }
@@ -136,6 +152,8 @@ export const ChatWidget = defineComponent(
         closeHistory()
         return
       }
+      // No session (signed out meanwhile): the chat view shows the sign-in state.
+      if (!sw) return
       view.value = 'history'
       void loadHistory(false)
     }
@@ -335,7 +353,7 @@ export const ChatWidget = defineComponent(
               h('p', errorText(text, state.error, lang)),
               h(
                 SwButton,
-                { kind: 'ghost', size: 'sm', onClick: () => loadHistory(false) },
+                { kind: 'ghost', size: 'sm', onClick: () => loadHistory(state.failedMore) },
                 () => text.retry
               )
             ])

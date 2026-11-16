@@ -197,4 +197,31 @@ describe('createChat open and reset', () => {
     expect(chat.state.messages).toEqual([])
     expect(chat.state.loading).toBe(false)
   })
+
+  it('reset while a new conversation is created - the new chat does not adopt it, no stale error', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((r) => {
+      release = r
+    })
+    const sw = fakeSw(() => ({ status: 200, body: stored }))
+    const post = sw.api.llm.POST
+    ;(sw.api.llm as { POST: unknown }).POST = async (...args: unknown[]) => {
+      await gate
+      return (post as (...a: unknown[]) => unknown)(...args)
+    }
+    const chat = createChat({ sw })
+    const sending = chat.send('Old draft')
+    chat.reset()
+    release()
+    await sending
+    expect(chat.state.messages).toEqual([])
+    expect(chat.state.error).toBeNull()
+    expect(chat.state.failedText).toBeNull()
+    expect(chat.state.streaming).toBe(false)
+    ;(sw.api.llm as { POST: unknown }).POST = post
+    await chat.send('Fresh')
+    // A second create: the first conversation stayed with the abandoned chat, which never called the model.
+    expect(sw.calls.posts).toBe(2)
+    expect(sw.calls.chats).toEqual(['c-new'])
+  })
 })

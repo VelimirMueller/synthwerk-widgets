@@ -21,7 +21,8 @@ interface App {
 
 /** Opens the installed page in an app window, with the API mocked and every request watched. */
 async function openApp(query = '?signed-in', camera = false): Promise<App> {
-  const base = test.info().project.use.baseURL ?? ''
+  const base = test.info().project.use.baseURL
+  if (!base) throw new Error('vision-standalone needs use.baseURL (playwright.config.ts)')
   const url = `${base}/demo/vision-app.html${query}`
   // A fresh profile per test in the test output folder (Playwright clears it).
   const dir = test.info().outputPath('profile')

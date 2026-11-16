@@ -4,7 +4,7 @@ slug: vision-widget
 status: beta
 epic: E5
 owner: widgets
-paths: ["src/vision/**", "src/vision-element.ts", "src/vision-entry.ts", "src/components/vision-widget.ts", "src/styles/vision.css", "demo/vision.html", "vite.config.ts"]
+paths: ["src/vision/**", "src/vision-element.ts", "src/vision-entry.ts", "src/components/vision-widget.ts", "src/styles/vision.css", "demo/vision.html", "demo/vision-app.html", "demo/vision-app.webmanifest", "demo/app-icon.svg", "vite.config.ts"]
 api: ["POST /identity/v1/apps/{appId}/widget-tokens", "POST /vision/v1/classifications", "POST /vision/v1/images"]
 events: []
 mcp: []
@@ -63,6 +63,41 @@ updated: 2026-11-16
 4. Optional: listen for `synthwerk-sign-in` to start your sign-in, or set `sign-in-url`.
 5. The camera needs a secure page (`https:` or `localhost`). On other pages the card shows only "Choose photo".
 6. Try it local: `pnpm demo` serves `http://127.0.0.1:4174/demo/vision.html`. Add `?signed-in`, `?lang=de` or `?save-photos`.
+7. Optional: let users add your page to the home screen (widgets#43). Add your own manifest and link it:
+
+   ```html
+   <link rel="manifest" href="/vision.webmanifest">
+   <meta name="theme-color" content="#ffffff">
+   ```
+
+   ```json
+   {
+     "name": "<your app name>",
+     "short_name": "<short name>",
+     "start_url": "/<page with the card>",
+     "scope": "/",
+     "display": "standalone",
+     "background_color": "#ffffff",
+     "theme_color": "#ffffff",
+     "icons": [
+       { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+       { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+     ]
+   }
+   ```
+
+   - Serve the page over `https`. Use your own name and icons. Synthwerk sends none.
+   - A strict CSP needs `manifest-src 'self'`, else the browser ignores the manifest.
+   - Keep your sign-in working in the installed page. It hands in the token through `getUserToken`, as before.
+   - A service worker is optional. It must not cache `/identity`, `/vision` or any token. It must not change the bundle bytes (SRI).
+   - On a phone: open the page in the browser, then "Add to Home Screen" (iOS Safari) or "Install app" (Android Chrome).
+   - Local: `http://127.0.0.1:4174/demo/vision-app.html` is a host page with a manifest.
+
+### In the installed page
+
+- The card works the same in `display-mode: standalone`: file picker, camera and the offline state.
+- Offline: the card shows the offline state and disables both buttons. A photo that still reaches the card sends no request.
+- No offline labels: labels need the vision service.
 
 | Attribute | Value | Default |
 |---|---|---|
@@ -96,7 +131,7 @@ The feature catalogue says "Vision widget installs as a PWA" (synthwerk#43). `<s
 - Sign-in: the sign-in of the host app. It hands in the user token through `getUserToken`, as today.
 - Offline: no. Labels need the vision service; offline, the card shows its offline state. Only "add to home screen".
 - Service worker: none from Synthwerk. A host service worker must not cache `/identity`, `/vision` or the widget token, and must not change the bytes of the versioned bundle (SRI).
-- Build follow-up: an installed-page check (standalone display mode, camera, offline state) and the manifest guide in "How to use".
+- Build follow-up done (widgets#43): the standalone check is in the e2e tests, the manifest guide in "How to use".
 
 ## Rules and limits
 
@@ -149,6 +184,10 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 - `tests/e2e/vision.spec.ts` — `signed-out visitor - sign-in prompt, no vision call, no camera`
 - `tests/e2e/vision.spec.ts` — `signed-in user - large photo resized below 1 MiB, primary label and alternatives` (strict CSP page)
 - `tests/e2e/vision.spec.ts` — `camera - starts only on click, photo from the fake camera, tracks stop` (Chromium fake camera)
+- `tests/e2e/vision-standalone.spec.ts` — `installed page - own manifest with display standalone, no Synthwerk manifest` (app window, `display-mode: standalone`)
+- `tests/e2e/vision-standalone.spec.ts` — `standalone - file picker: the photo gets its labels`
+- `tests/e2e/vision-standalone.spec.ts` — `standalone - camera: photo from the fake camera gets its labels`
+- `tests/e2e/vision-standalone.spec.ts` — `standalone offline - offline state, buttons disabled, a photo sends no request`
 
 ## Changes
 
@@ -158,3 +197,4 @@ Vision answers FastAPI bodies `{detail}`, not problems. The widget maps the stat
 | 2026-10-30 | Calls go through the SDK vision client and its generated types (synthwerk-sdk#19). No change for hosts. |
 | 2026-10-30 | Vision bundle in `release.json` with SRI, snippet with `integrity` (widgets#39). Not-allowed state readable in a real browser (widgets#41). Decision on the PWA page (widgets#38). |
 | 2026-11-16 | The widget host image serves this bundle next to the chat bundle (widgets#32). Version 0.3.0. No change for hosts. |
+| 2026-11-16 | Installed host page (widgets#43): manifest guide in "How to use", test host page `demo/vision-app.html` with its own manifest. Playwright opens it as an app window (`display-mode: standalone`): file picker, camera, offline. No change in the card. |

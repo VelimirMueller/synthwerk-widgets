@@ -17,5 +17,31 @@
         "integrity": "sha384-8SZ5DyZVZ0qY5/noMPsi5ZSHPxgzNIP8t0cm8bE3QQ2oWZyqgHadGPd2GtgBxSfI"
       }
     ]
+  },
+  {
+    "version": "0.4.0",
+    "bundles": [
+      {
+        "name": "chat",
+        "file": "synthwerk-chat.js",
+        "path": "/widgets/v0.4.0/synthwerk-chat.js",
+        "bytes": 139632,
+        "integrity": "sha384-iBHGfN85a+BCtTK7g8p8OBkkgDJWC0BqGRKGELYqP/SqQAGAlr+PtUlb6AE+6D52"
+      },
+      {
+        "name": "vision",
+        "file": "synthwerk-vision.js",
+        "path": "/widgets/v0.4.0/synthwerk-vision.js",
+        "bytes": 130803,
+        "integrity": "sha384-ITKVb2BguQpyYh6Fs1to3do7Ndq6gwzw8M+481gQ1HReIVZD4nj/Uh9oZryfSKa8"
+      },
+      {
+        "name": "chat-frame",
+        "file": "synthwerk-chat-frame.html",
+        "path": "/widgets/v0.4.0/synthwerk-chat-frame.html",
+        "bytes": 568,
+        "integrity": "sha384-OnJt1/vyu2EEI9gudzGDx/3cpFBtV1krwDRnEqc/XJKqX9xUKkDQ1lID2t66TD2T"
+      }
+    ]
   }
 ]

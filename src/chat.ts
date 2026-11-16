@@ -32,7 +32,7 @@ export interface Chat {
   dismiss(): void
   /** Loads a past conversation of the user and continues it. Stops a running answer. */
   open(id: string): Promise<void>
-  /** Starts an empty chat: the next message creates a new conversation. */
+  /** Starts an empty chat: the next message creates a new conversation. Stops a running answer. */
   reset(): void
   /** Returns `failedText` once and clears it. */
   takeFailedText(): string | null
@@ -202,6 +202,7 @@ export function createChat(options: ChatOptions): Chat {
     },
     dispose() {
       loading++
+      generation++
       controller?.abort()
     }
   }

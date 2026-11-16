@@ -47,6 +47,8 @@ while read -r path integrity; do
   # A compressed answer must decode to the same bytes (SRI checks the decoded body).
   curl -sS --compressed -H 'Accept-Encoding: gzip' -o "$tmp/gz" "$base$path"
   cmp -s "$tmp/body" "$tmp/gz" || fail "$path: the gzip answer decodes to other bytes"
+  code=$(curl -sS -I -o /dev/null -w '%{http_code}' "$base$path")
+  [ "$code" = 200 ] || fail "HEAD $path answers $code"
   echo "ok $path $got"
 done < <(node -e "for (const b of require('./dist/release.json').bundles) console.log(b.path, b.integrity)")
 

@@ -71,3 +71,21 @@ export function summaryOf(release: Release): string {
     ''
   ].join('\n')
 }
+
+/**
+ * The notes of the GitHub Release v<version>: the summary, then the entry that a PR adds to
+ * releases.json, so the widget host image serves this version (docs/features/chat-widget.md).
+ */
+export function notesOf(release: Release): string {
+  return [
+    summaryOf(release),
+    '### Entry for releases.json',
+    '',
+    'The widget host serves this version after a PR adds this entry to `releases.json`.',
+    '',
+    '```json',
+    JSON.stringify(release, null, 2),
+    '```',
+    ''
+  ].join('\n')
+}

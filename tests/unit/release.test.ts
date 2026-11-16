@@ -16,20 +16,20 @@ const sha384 = (bytes: Uint8Array) =>
 
 describe('release record (widgets#39)', () => {
   it('both bundles - versioned path, size and sha384 integrity of each', () => {
-    const release = releaseOf('0.2.0', read)
-    expect(release.version).toBe('0.2.0')
+    const release = releaseOf('0.3.0', read)
+    expect(release.version).toBe('0.3.0')
     expect(release.bundles).toEqual([
       {
         name: 'chat',
         file: 'synthwerk-chat.js',
-        path: '/widgets/v0.2.0/synthwerk-chat.js',
+        path: '/widgets/v0.3.0/synthwerk-chat.js',
         bytes: 11,
         integrity: sha384(read('synthwerk-chat.js'))
       },
       {
         name: 'vision',
         file: 'synthwerk-vision.js',
-        path: '/widgets/v0.2.0/synthwerk-vision.js',
+        path: '/widgets/v0.3.0/synthwerk-vision.js',
         bytes: 21,
         integrity: sha384(read('synthwerk-vision.js'))
       }
@@ -41,13 +41,13 @@ describe('release record (widgets#39)', () => {
   })
 
   it('version not X.Y.Z - refused', () => {
-    expect(() => releaseOf('0.2', read)).toThrow(/not X.Y.Z/)
-    expect(() => releaseOf('v0.2.0', read)).toThrow(/not X.Y.Z/)
+    expect(() => releaseOf('0.3', read)).toThrow(/not X.Y.Z/)
+    expect(() => releaseOf('v0.3.0', read)).toThrow(/not X.Y.Z/)
   })
 
   it('a bundle is missing - the read error stops the release', () => {
     expect(() =>
-      releaseOf('0.2.0', (f) => {
+      releaseOf('0.3.0', (f) => {
         if (f === 'synthwerk-vision.js') throw new Error('dist/synthwerk-vision.js is missing')
         return read(f)
       })
@@ -55,15 +55,15 @@ describe('release record (widgets#39)', () => {
   })
 
   it('snippet - module script with integrity and crossorigin', () => {
-    const [, vision] = releaseOf('0.2.0', read).bundles
+    const [, vision] = releaseOf('0.3.0', read).bundles
     if (!vision) throw new Error('no vision bundle')
     expect(snippetOf(vision)).toBe(
-      `<script type="module" src="https://<widget host>/widgets/v0.2.0/synthwerk-vision.js" integrity="${vision.integrity}" crossorigin="anonymous"></script>`
+      `<script type="module" src="https://<widget host>/widgets/v0.3.0/synthwerk-vision.js" integrity="${vision.integrity}" crossorigin="anonymous"></script>`
     )
   })
 
   it('job summary - one row per bundle with path, size and integrity, then both snippets', () => {
-    const release = releaseOf('0.2.0', read)
+    const release = releaseOf('0.3.0', read)
     const summary = summaryOf(release)
     for (const b of release.bundles) {
       expect(summary).toContain(

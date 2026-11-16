@@ -1,5 +1,7 @@
-# Fleet library CI (fleet-standard templates/library/public). PRs and manual runs only:
+# Fleet deploys CI (fleet-standard templates/deploys/public). PRs and manual runs only:
 # no push or tag runs (CI-COST-05, CI-COST-19). Required check context: conclusion.
+# The build stage builds the embed bundles and the widget host test image and runs
+# scripts/image-smoke.sh. The image is published only by deploy.yml (widgets#32).
 name: ci
 
 on:
@@ -54,7 +56,7 @@ jobs:
     if: ${{ !failure() && !cancelled() && needs.changes.outputs.code == 'true' }}
     permissions:
       contents: read
-    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-lint.yml@v0.0.2
+    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-lint.yml@v0.0.4
     with:
       stack: node
       # Default node lint plus the v-html ban of the old blueprint ts-ci (FR-17). Model output
@@ -70,7 +72,7 @@ jobs:
     if: ${{ !failure() && !cancelled() && needs.changes.outputs.code == 'true' }}
     permissions:
       contents: read
-    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-unit.yml@v0.0.2
+    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-unit.yml@v0.0.4
     with:
       stack: node
 
@@ -79,7 +81,7 @@ jobs:
     if: ${{ !failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.e2e }}
     permissions:
       contents: read
-    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-e2e.yml@v0.0.2
+    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-e2e.yml@v0.0.4
     with:
       stack: node
 
@@ -88,16 +90,17 @@ jobs:
     if: ${{ !failure() && !cancelled() && needs.changes.outputs.code == 'true' }}
     permissions:
       contents: read
-    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-build.yml@v0.0.2
+    uses: VelimirMueller/fleet-workflows/.github/workflows/_ci-build.yml@v0.0.4
     with:
       stack: node
-      # The embed bundle is the artifact: build it and pack it, publish nothing (CI-BUILD-04).
-      # sri.ts writes dist/release.json and the SRI hash to the job summary (widgets#32).
+      # sri.ts writes dist/release.json, the release notes and the SRI hashes to the job summary.
+      # The smoke builds the test image itself (SOURCE=source) and checks the five host headers
+      # and that the image serves the same bytes as this build. image: false, because the
+      # published image (SOURCE=release) needs a GitHub Release of every version in releases.json.
       command: >-
         pnpm run build &&
         node scripts/release/sri.ts &&
-        mkdir -p "$RUNNER_TEMP/pack" &&
-        pnpm pack --pack-destination "$RUNNER_TEMP/pack"
+        scripts/image-smoke.sh
 
   conclusion:
     needs: [changes, lint, unit, e2e, build]

@@ -27,17 +27,17 @@
     "@synthwerk/sdk": "file:vendor/synthwerk-sdk",
     "@synthwerk/tokens": "file:vendor/synthwerk-tokens",
     "@synthwerk/ui-vue": "file:vendor/synthwerk-ui-vue",
-    "vue": "3.5.43"
+    "vue": "3.5.45"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
-    "@playwright/test": "1.64.1",
-    "@types/node": "24.19.1",
-    "@vitest/coverage-v8": "5.0.3",
-    "@vue/test-utils": "2.5.1",
-    "happy-dom": "20.14.5",
-    "typescript": "6.0.3",
-    "vite": "8.3.5",
-    "vitest": "5.0.3"
+    "@biomejs/biome": "2.6.8",
+    "@playwright/test": "1.65.1",
+    "@types/node": "26.6.6",
+    "@vitest/coverage-v8": "5.1.0",
+    "@vue/test-utils": "2.6.0",
+    "happy-dom": "21.0.4",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
   }
 }
